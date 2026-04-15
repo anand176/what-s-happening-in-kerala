@@ -88,11 +88,14 @@ export default function Home() {
                 .filter((item) => daysUntilLabel(item.date) !== null)
                 .map((item, i) => {
                   const countdown = daysUntilLabel(item.date)!;
-                  const d = new Date(item.date);
+                  const d = new Date(`${item.date}T12:00:00`);
                   const dateLabel = d.toLocaleDateString("en-IN", {
                     day: "numeric",
                     month: "short",
                     year: "numeric",
+                  });
+                  const weekdayLabel = d.toLocaleDateString("en-IN", {
+                    weekday: "long",
                   });
                   return (
                     <div
@@ -109,11 +112,9 @@ export default function Home() {
                       <div className="text-[0.86rem] font-semibold text-[var(--gf-text)]">
                         {item.title}
                       </div>
-                      {item.note ? (
-                        <div className="mt-1 text-[0.68rem] text-[var(--gf-text-muted)]">
-                          {item.note}
-                        </div>
-                      ) : null}
+                      <div className="mt-1 font-ml-serif text-[0.68rem] capitalize text-[var(--gf-text-muted)]">
+                        {weekdayLabel}
+                      </div>
                       <span className="mt-2 inline-block rounded-sm bg-[var(--gf-accent-soft)] px-2.5 py-0.5 font-mono text-[0.65rem] font-semibold text-[var(--gf-accent)]">
                         {dateLabel}
                       </span>

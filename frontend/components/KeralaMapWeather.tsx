@@ -1,14 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  CircleMarker,
-  GeoJSON,
-  MapContainer,
-  TileLayer,
-  Tooltip,
-  useMap,
-} from "react-leaflet";
+import { GeoJSON, MapContainer, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
 import type { StyleFunction } from "leaflet";
 import type { Feature, FeatureCollection, GeoJsonObject } from "geojson";
@@ -120,7 +113,7 @@ export function KeralaMapWeather() {
   const detail = cityRows.find((c) => c.district === selectedDistrict);
 
   const mlMapSub =
-    "\u0D1C\u0D3F\u0D32\u0D4D\u0D32\u0D15\u0D7E \u0D2E\u0D3E\u0D2A\u0D4D\u0D2A\u0D4D \u0D0F\u0D35\u0D41\u0D02 \u0D15\u0D3E\u0D33\u0D3E\u0D35\u0D38\u0D4D\u0D25";
+    "\u0D1C\u0D3F\u0D32\u0D4D\u0D32\u0D15\u0D7E \u0D2E\u0D3E\u0D2A\u0D4D\u0D2A\u0D41\u0D02 \u0D15\u0D3E\u0D32\u0D3E\u0D35\u0D38\u0D4D\u0D25\u0D2F\u0D41\u0D02";
 
   return (
     <GrafanaPanel
@@ -135,8 +128,8 @@ export function KeralaMapWeather() {
       }
     >
       <p className="mb-4 text-[0.8rem] text-[var(--gf-text-muted)]">
-        Pan and zoom the basemap. Orange fill = selected district. Dots mark main weather
-        hubs (click a district or chip to retarget telemetry).
+        Pan and zoom. Orange fill = selected district. Click a district polygon or use the
+        district chips for weather.
       </p>
 
       <div className="grid gap-6 lg:grid-cols-5">
@@ -185,29 +178,6 @@ export function KeralaMapWeather() {
                       });
                     }}
                   />
-                  {keralaMainCities.map((c) => (
-                    <CircleMarker
-                      key={c.district}
-                      center={[c.lat, c.lon]}
-                      radius={selectedDistrict === c.district ? 10 : 7}
-                      pathOptions={{
-                        color: "#d8dee9",
-                        weight: 2,
-                        fillColor:
-                          selectedDistrict === c.district
-                            ? "#f05a28"
-                            : "#5c7a85",
-                        fillOpacity: 1,
-                      }}
-                      eventHandlers={{
-                        click: () => setSelectedDistrict(c.district),
-                      }}
-                    >
-                      <Tooltip direction="top" offset={[0, -6]} opacity={0.95}>
-                        {c.cityLabel}
-                      </Tooltip>
-                    </CircleMarker>
-                  ))}
                 </MapContainer>
               ) : !geoErr ? (
                 <div className="flex h-full items-center justify-center text-[0.85rem] text-[var(--gf-text-muted)]">
