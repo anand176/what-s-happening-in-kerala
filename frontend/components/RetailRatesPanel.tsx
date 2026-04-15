@@ -42,7 +42,7 @@ export function RetailRatesPanel() {
   }, [load]);
 
   const mlSub =
-    "\u0D2A\u0D47\u0D1F\u0D4D\u0D31\u0D4D\u0D31\u0D4D\u0D31\u0D4B\u0D02 \u0D21\u0D40\u0D38\u0D32\u0D4D\u0D31\u0D4D \u0D38\u0D4D\u0D35\u0D30\u0D4D\u0D23\u0D4D\u0D23\u0D02";
+    "\u0D2A\u0D46\u0D1F\u0D4D\u0D30\u0D4B\u0D7E · \u0D21\u0D40\u0D38\u0D4D\u0D32\u0D4D\u200D · \u0D38\u0D4D\u0D35\u0D30\u0D4D\u200D\u0D23\u0D02";
 
   return (
     <GrafanaPanel
@@ -79,8 +79,8 @@ export function RetailRatesPanel() {
           </p>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <div className="gf-subpanel p-3">
-              <div className="font-mono text-[0.58rem] tracking-wide text-[var(--gf-text-muted)] uppercase">
-                Petrol
+              <div className="font-ml-sans text-[0.62rem] font-medium text-[var(--gf-text-muted)]">
+                {"\u0D2A\u0D46\u0D1F\u0D4D\u0D30\u0D4B\u0D7E"}
               </div>
               <div className="mt-1 font-mono text-[1.05rem] font-semibold text-[var(--gf-accent)]">
                 {inr(data.petrolInrPerLitre)}
@@ -90,8 +90,8 @@ export function RetailRatesPanel() {
               </div>
             </div>
             <div className="gf-subpanel p-3">
-              <div className="font-mono text-[0.58rem] tracking-wide text-[var(--gf-text-muted)] uppercase">
-                Diesel
+              <div className="font-ml-sans text-[0.62rem] font-medium text-[var(--gf-text-muted)]">
+                {"\u0D21\u0D40\u0D38\u0D4D\u0D32\u0D4D\u200D"}
               </div>
               <div className="mt-1 font-mono text-[1.05rem] font-semibold text-[var(--gf-accent)]">
                 {inr(data.dieselInrPerLitre)}
@@ -101,8 +101,9 @@ export function RetailRatesPanel() {
               </div>
             </div>
             <div className="gf-subpanel p-3">
-              <div className="font-mono text-[0.58rem] tracking-wide text-[var(--gf-text-muted)] uppercase">
-                Gold 22K
+              <div className="font-ml-sans text-[0.62rem] font-medium text-[var(--gf-text-muted)]">
+                {"\u0D38\u0D4D\u0D35\u0D30\u0D4D\u200D\u0D23\u0D02"}{" "}
+                <span className="font-mono text-[0.55rem] opacity-80">22K</span>
               </div>
               <div className="mt-1 font-mono text-[1.05rem] font-semibold text-[var(--gf-warn)]">
                 {inrInt(data.gold22Carat.inrPerGram)}
