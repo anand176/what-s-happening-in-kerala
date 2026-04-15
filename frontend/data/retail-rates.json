@@ -1,0 +1,12 @@
+{
+  "asOf": "2026-04-15",
+  "regionLabel": "Kerala — Thiruvananthapuram (IOCL retail, indicative)",
+  "petrolInrPerLitre": 100.78,
+  "dieselInrPerLitre": 89.62,
+  "gold22Carat": {
+    "inrPerGram": 6840,
+    "pavanGrams": 8,
+    "inrPerPavan": 54720
+  },
+  "disclaimer": "Update this file from Indian Oil / BPCL / HPCL pumps or trusted listings. Gold: typical22 ct retail; 1 pavan = 8 g."
+}
