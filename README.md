@@ -76,4 +76,4 @@ kerala-dashboard/
 - **Tailwind CSS v4**
 - **Leaflet + react-leaflet** — district map
 - **rss-parser** — server-side RSS aggregation
-- Open-Meteo, USGS, Yahoo Finance, open.er-api.com
+- Open-Meteo, USGS, Yahoo Finance, open.er-api.com APIS
