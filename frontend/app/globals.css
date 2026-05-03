@@ -389,3 +389,8 @@ summary:focus-visible {
   background: var(--gf-panel-bg) !important;
   color: var(--gf-text) !important;
 }
+
+/* Hide Leaflet attribution branding */
+.leaflet-control-attribution {
+  display: none !important;
+}
