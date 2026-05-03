@@ -26,15 +26,15 @@ type ForecastBlock = {
 
 // ─── AQI helpers ──────────────────────────────────────────────────────────────
 
-/** European AQI (0–500 scale from Open-Meteo) → label + colour */
+/** European AQI (EAQI) 0–500 → label + colour */
 function aqiMeta(idx: number | null): { label: string; color: string } {
-  if (idx === null) return { label: "N/A", color: "var(--gf-text-muted)" };
-  if (idx <= 20)  return { label: "Good",          color: "var(--gf-live)" };
-  if (idx <= 40)  return { label: "Fair",           color: "#a8d08d" };
-  if (idx <= 60)  return { label: "Moderate",       color: "var(--gf-warn)" };
-  if (idx <= 80)  return { label: "Poor",           color: "#e07b39" };
-  if (idx <= 100) return { label: "Very Poor",      color: "var(--gf-danger)" };
-  return           { label: "Extremely Poor", color: "#9b1c1c" };
+  if (idx === null) return { label: "N/A",        color: "var(--gf-text-muted)" };
+  if (idx <= 20)   return { label: "Good",        color: "var(--gf-live)" };
+  if (idx <= 40)   return { label: "Fair",        color: "#a8d08d" };
+  if (idx <= 60)   return { label: "Moderate",    color: "var(--gf-warn)" };
+  if (idx <= 80)   return { label: "Poor",        color: "#e07b39" };
+  if (idx <= 100)  return { label: "Very Poor",   color: "var(--gf-danger)" };
+  return            { label: "Ext. Poor",   color: "#9b1c1c" };
 }
 
 function pm25Bar(val: number | null) {
@@ -249,7 +249,7 @@ export function KeralaMapWeather() {
           {/* ── Wikipedia brief — fills the space below the map ── */}
           <div className="gf-subpanel flex-1 p-4">
             <p className="mb-3 font-mono text-[0.6rem] font-semibold tracking-widest text-[var(--gf-accent)] uppercase">
-              📖 District brief — {selectedDistrict}
+              District brief — {selectedDistrict}
             </p>
             {wikiLoading && (
               <div className="flex items-center gap-2 text-[0.8rem] text-[var(--gf-text-muted)]">
@@ -316,7 +316,7 @@ export function KeralaMapWeather() {
               {detail?.weather ? (
                 <div>
                   <p className="mb-1 font-mono text-[0.6rem] font-semibold tracking-widest text-[var(--gf-accent)] uppercase">
-                    🌤 Weather
+                    Weather
                   </p>
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div>
@@ -327,7 +327,7 @@ export function KeralaMapWeather() {
                         {weatherCodeLabel(detail.weather.weathercode)}
                       </div>
                     </div>
-                    <div className="text-5xl text-[var(--gf-text-muted)]" aria-hidden>⛅</div>
+                    <div className="text-5xl text-[var(--gf-text-muted)]" aria-hidden />
                   </div>
                   <dl className="mt-3 grid grid-cols-2 gap-2">
                     <div className="rounded-sm border border-[var(--gf-panel-border)] bg-[var(--gf-panel-inner)] px-2 py-2 text-center">
@@ -348,7 +348,7 @@ export function KeralaMapWeather() {
               {detailAqi ? (
                 <div>
                   <p className="mb-2 font-mono text-[0.6rem] font-semibold tracking-widest text-[var(--gf-accent)] uppercase">
-                    🌫 Air quality
+                    Air quality
                   </p>
                   {(() => {
                     const aqiInfo = aqiMeta(detailAqi.aqi_index);

@@ -3,6 +3,7 @@ export type RetailRatesPayload = {
   regionLabel: string;
   petrolInrPerLitre: number;
   dieselInrPerLitre: number;
+  lpgInrPerCylinder: number;
   gold22Carat: {
     inrPerGram: number;
     pavanGrams: number;
@@ -22,6 +23,7 @@ export function isRetailRatesPayload(x: unknown): x is RetailRatesPayload {
     typeof o.regionLabel === "string" &&
     typeof o.petrolInrPerLitre === "number" &&
     typeof o.dieselInrPerLitre === "number" &&
+    typeof o.lpgInrPerCylinder === "number" &&
     typeof gg.inrPerGram === "number" &&
     typeof gg.pavanGrams === "number" &&
     typeof gg.inrPerPavan === "number" &&

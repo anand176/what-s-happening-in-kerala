@@ -60,7 +60,7 @@ export function AlertBanner() {
         className="shrink-0 rounded-sm px-1.5 py-0.5 text-[0.58rem] font-bold tracking-wider text-[#0b0f14]"
         style={{ background: hasAlert ? "var(--gf-danger)" : "var(--gf-accent)" }}
       >
-        {hasAlert ? "🚨 BREAKING" : "📰 LATEST"}
+        {hasAlert ? "BREAKING" : "LATEST"}
       </span>
       <div className="min-w-0 flex-1 overflow-hidden">
         <div className="kt-ticker-track whitespace-nowrap">

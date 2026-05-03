@@ -6,15 +6,15 @@ import type { AqiPayload, AqiCityData } from "@/app/api/aqi/route";
 
 const REFRESH_MS = 10 * 60 * 1000; // 10 min
 
-/** European AQI (0–500 scale from Open-Meteo) → label + colour */
+/** European AQI (EAQI) 0–500 → label + colour */
 function aqiMeta(idx: number | null): { label: string; color: string } {
-  if (idx === null) return { label: "N/A", color: "var(--gf-text-muted)" };
-  if (idx <= 20)  return { label: "Good",           color: "var(--gf-live)" };
-  if (idx <= 40)  return { label: "Fair",            color: "#a8d08d" };
-  if (idx <= 60)  return { label: "Moderate",        color: "var(--gf-warn)" };
-  if (idx <= 80)  return { label: "Poor",            color: "#e07b39" };
-  if (idx <= 100) return { label: "Very Poor",       color: "var(--gf-danger)" };
-  return           { label: "Extremely Poor",  color: "#9b1c1c" };
+  if (idx === null) return { label: "N/A",        color: "var(--gf-text-muted)" };
+  if (idx <= 20)   return { label: "Good",        color: "var(--gf-live)" };
+  if (idx <= 40)   return { label: "Fair",        color: "#a8d08d" };
+  if (idx <= 60)   return { label: "Moderate",    color: "var(--gf-warn)" };
+  if (idx <= 80)   return { label: "Poor",        color: "#e07b39" };
+  if (idx <= 100)  return { label: "Very Poor",   color: "var(--gf-danger)" };
+  return            { label: "Ext. Poor",   color: "#9b1c1c" };
 }
 
 function pm25Bar(val: number | null) {

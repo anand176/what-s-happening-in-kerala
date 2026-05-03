@@ -8,7 +8,7 @@ export type AqiCityData = {
   cityLabel: string;
   pm2_5: number | null;
   pm10: number | null;
-  aqi_index: number | null; // European AQI (0–5 scale)
+  aqi_index: number | null; // Indian AQI (NAQI) 0–500
 };
 
 export type AqiPayload = {
@@ -30,10 +30,7 @@ export async function GET() {
     const res = await fetch(url, { next: { revalidate: 0 } });
     if (!res.ok) throw new Error(`AQI API ${res.status}`);
 
-    // Open-Meteo returns an array when multiple locations are requested
-    const raw = (await res.json()) as
-      | AqiRaw[]
-      | AqiRaw;
+    const raw = (await res.json()) as AqiRaw[] | AqiRaw;
     const list: AqiRaw[] = Array.isArray(raw) ? raw : [raw];
 
     const cities: AqiCityData[] = keralaMainCities.map((c, i) => {
@@ -54,11 +51,7 @@ export async function GET() {
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     return NextResponse.json(
-      {
-        cities: [],
-        updatedAt: new Date().toISOString(),
-        error: msg,
-      } satisfies AqiPayload,
+      { cities: [], updatedAt: new Date().toISOString(), error: msg } satisfies AqiPayload,
       { status: 500 },
     );
   }

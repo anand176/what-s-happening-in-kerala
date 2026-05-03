@@ -1,15 +1,11 @@
 import { AlertBanner } from "@/components/chrome/AlertBanner";
-import { ElephantDivider } from "@/components/chrome/ElephantDivider";
 import { MainNav } from "@/components/chrome/MainNav";
 import { SiteHeader } from "@/components/chrome/SiteHeader";
 import { GrafanaPanel } from "@/components/grafana/GrafanaPanel";
-import { AqiPanel } from "@/components/AqiPanel";
-import { EarthquakePanel } from "@/components/EarthquakePanel";
-import { ForexPanel } from "@/components/ForexPanel";
+import { GrafanaDashRow } from "@/components/GrafanaDashRow";
+import { GrafanaDataRow } from "@/components/GrafanaDataRow";
 import { KeralaMapWeatherLoader } from "@/components/KeralaMapWeatherLoader";
-import { MarketsPanel } from "@/components/MarketsPanel";
 import { NewsSection } from "@/components/NewsSection";
-import { RetailRatesPanel } from "@/components/RetailRatesPanel";
 import { StreamEmbeds } from "@/components/StreamEmbeds";
 import { youtubeStreamEntries } from "@/config/sources";
 import festivals from "@/data/festivals.json";
@@ -46,7 +42,6 @@ const FEST_ACCENTS = [
   "#e24d4d", // red
   "#29b6f6", // blue
 ];
-
 function daysUntilLabel(dateStr: string): string | null {
   const diff = Math.ceil(
     (new Date(dateStr).getTime() - Date.now()) / 86400000,
@@ -78,25 +73,11 @@ export default function Home() {
 
         <StreamEmbeds entries={youtubeStreamEntries} />
 
-        <RetailRatesPanel />
+        <GrafanaDataRow />
 
-        <ElephantDivider emoji={"💹"} />
-
-        <MarketsPanel />
-
-        <ForexPanel />
-
-        <ElephantDivider emoji={"🌫️"} />
-
-        <AqiPanel />
-
-        <EarthquakePanel />
-
-        <ElephantDivider emoji={"📡"} />
+        <GrafanaDashRow />
 
         <NewsSection />
-
-        <ElephantDivider emoji={"\u{1F418}"} />
 
         <GrafanaPanel
           id="festivals"
@@ -112,7 +93,7 @@ export default function Home() {
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
               {festivalItems
                 .filter((item) => daysUntilLabel(item.date) !== null)
-                .map((item, i) => {
+                .map((item) => {
                   const countdown = daysUntilLabel(item.date)!;
                   const d = new Date(`${item.date}T12:00:00`);
                   const dateLabel = d.toLocaleDateString("en-IN", {
@@ -121,14 +102,10 @@ export default function Home() {
                     year: "numeric",
                   });
                   const weekdayLabel = d.toLocaleDateString("en-IN", { weekday: "long" });
-                  const accent = FEST_ACCENTS[i % FEST_ACCENTS.length];
-                  const isToday = countdown === "Today!";
-                  const isTomorrow = countdown === "Tomorrow!";
                   return (
                     <div
                       key={`${item.title}-${item.date}`}
                       className="kt-card-hover gf-subpanel relative flex items-stretch overflow-hidden"
-                      style={{ borderLeft: `3px solid ${accent}` }}
                     >
                       {/* Content */}
                       <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 px-3 py-3">
@@ -137,8 +114,7 @@ export default function Home() {
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
                           <span
-                            className="font-mono text-[0.62rem] font-semibold"
-                            style={{ color: accent }}
+                            className="font-mono text-[0.62rem] font-semibold text-[var(--gf-text-muted)]"
                           >
                             {dateLabel}
                           </span>
@@ -150,14 +126,9 @@ export default function Home() {
                       {/* Countdown badge */}
                       <div className="flex shrink-0 items-center pr-3">
                         <span
-                          className="rounded-sm px-2 py-1 text-center font-mono text-[0.6rem] font-bold leading-tight"
-                          style={{
-                            background: isToday || isTomorrow ? `${accent}30` : "var(--gf-panel-inner)",
-                            color: isToday || isTomorrow ? accent : "var(--gf-text-muted)",
-                            border: `1px solid ${isToday || isTomorrow ? accent + "66" : "var(--gf-panel-border)"}`,
-                          }}
+                          className="rounded-sm px-2 py-1 text-center font-mono text-[0.6rem] font-bold leading-tight border border-[var(--gf-panel-border)] bg-[var(--gf-panel-inner)] text-[var(--gf-text-muted)]"
                         >
-                          {isToday || isTomorrow ? (
+                          {countdown === "Today!" || countdown === "Tomorrow!" ? (
                             countdown
                           ) : (
                             <>
@@ -173,8 +144,6 @@ export default function Home() {
             </div>
           )}
         </GrafanaPanel>
-
-        <ElephantDivider emoji={"\u{1F4E1}"} />
 
         <GrafanaPanel
           id="movies"
@@ -224,7 +193,7 @@ export default function Home() {
                       </div>
                     ) : null}
                     <span className="mt-1 inline-block rounded-sm border border-[var(--gf-live)]/40 bg-[rgba(63,185,80,0.12)] px-1.5 py-0.5 font-mono text-[0.55rem] font-bold text-[var(--gf-live)]">
-                      {"\u{1F3A5}"} Showtime
+                      Showtime
                     </span>
                   </div>
                 </div>

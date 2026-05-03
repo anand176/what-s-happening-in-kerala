@@ -3,17 +3,17 @@
 import { useCallback, useEffect, useState } from "react";
 
 const LINKS = [
-  { href: "#districts", label: "Districts", emoji: "\u{1F5FA}\uFE0F" },
-  { href: "#live-news", label: "Live News", emoji: "\u{1F4FA}" },
-  { href: "#retail-rates", label: "Fuel & gold", emoji: "\u26FD" },
-  { href: "#markets", label: "Markets", emoji: "\u{1F4C8}" },
-  { href: "#forex", label: "Forex", emoji: "\u{1F4B1}" },
-  { href: "#aqi", label: "Air quality", emoji: "\u{1F32B}\uFE0F" },
-  { href: "#earthquakes", label: "Seismic", emoji: "\u{1F30D}" },
-  { href: "#latest-news", label: "Headlines", emoji: "\u{1F4F0}" },
-  { href: "#weather-section", label: "Weather", emoji: "\u{1F327}\uFE0F" },
-  { href: "#festivals", label: "Festivals", emoji: "\u{1F389}" },
-  { href: "#movies", label: "Movies", emoji: "\u{1F3AC}" },
+  { href: "#districts",     label: "Districts"   },
+  { href: "#live-news",     label: "Live News"   },
+  { href: "#retail-rates",  label: "Fuel & Gold" },
+  { href: "#markets",       label: "Markets"     },
+  { href: "#forex",         label: "Forex"       },
+  { href: "#aqi",           label: "Air Quality" },
+  { href: "#earthquakes",   label: "Seismic"     },
+  { href: "#latest-news",   label: "Headlines"   },
+  { href: "#weather-section", label: "Weather"   },
+  { href: "#festivals",     label: "Festivals"   },
+  { href: "#movies",        label: "Movies"      },
 ] as const;
 
 export function MainNav() {
@@ -52,27 +52,21 @@ export function MainNav() {
       className="gf-nav-bar flex overflow-x-auto [&::-webkit-scrollbar]:hidden"
       style={{ scrollbarWidth: "none" }}
     >
-      {LINKS.map(({ href, label, emoji }) => {
+      {LINKS.map(({ href, label }) => {
         const isOn = active === href;
         return (
           <a
             key={href}
             href={href}
-            className="flex shrink-0 items-center gap-1.5 px-4 py-2.5 font-mono text-[0.72rem] font-medium whitespace-nowrap tracking-wide uppercase transition-colors"
+            className="flex shrink-0 items-center px-4 py-2.5 font-mono text-[0.72rem] font-medium whitespace-nowrap tracking-wide uppercase transition-colors"
             style={{
               color: isOn ? "var(--gf-accent)" : "var(--gf-text-muted)",
-              borderBottom: isOn
-                ? "2px solid var(--gf-accent)"
-                : "2px solid transparent",
+              borderBottom: isOn ? "2px solid var(--gf-accent)" : "2px solid transparent",
               marginBottom: "-1px",
               background: isOn ? "var(--gf-accent-soft)" : "transparent",
             }}
-            onClick={(e) => {
-              e.preventDefault();
-              scrollTo(href);
-            }}
+            onClick={(e) => { e.preventDefault(); scrollTo(href); }}
           >
-            <span>{emoji}</span>
             {label}
           </a>
         );

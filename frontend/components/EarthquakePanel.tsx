@@ -133,7 +133,7 @@ export function EarthquakePanel() {
           </div>
           {data.quakes.length === 0 ? (
             <p className="py-4 text-center text-[0.85rem] text-[var(--gf-text-muted)]">
-              🟢 No significant seismic activity in the last 30 days.
+              No significant seismic activity in the last 30 days.
             </p>
           ) : (
             <ul className="max-h-[min(70vh,520px)] space-y-2 overflow-y-auto pr-1">

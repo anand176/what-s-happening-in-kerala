@@ -26,11 +26,6 @@ function IndexCard({ idx, marketOpen }: { idx: MarketIndex; marketOpen: boolean 
 
   return (
     <div className="kt-card-hover gf-subpanel relative overflow-hidden p-4">
-      <span
-        className="absolute top-0 right-0 left-0 h-0.5"
-        style={{ background: changeColor }}
-        aria-hidden
-      />
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className="font-mono text-[0.65rem] font-semibold tracking-wider text-[var(--gf-text-muted)] uppercase">
