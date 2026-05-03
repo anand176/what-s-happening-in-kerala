@@ -1,10 +1,56 @@
 "use client";
 
-const DEFAULT_TICKER =
-  "IMD issues Yellow Alert for heavy rainfall in Wayanad, Idukki, and Malappuram districts • Kochi Metro extends services till midnight on weekends • Thrissur Pooram date announced for May 2026 • KSRTC launches new AC bus service on Thiruvananthapuram–Kochi route";
+import { useEffect, useState } from "react";
 
-export function AlertBanner({ text = DEFAULT_TICKER }: { text?: string }) {
-  const doubled = `${text} \u00A0\u00A0\u2022\u00A0\u00A0 ${text}`;
+type NewsItem = { title: string; source: string };
+type NewsPayload = { items: NewsItem[]; error: string | null };
+
+const FALLBACK = "Kerala Monitor — live news, weather, markets and more";
+
+const REFRESH_MS = 5 * 60 * 1000; // refresh every 5 min
+
+function buildTickerText(items: NewsItem[]): string {
+  if (!items.length) return FALLBACK;
+  return items
+    .slice(0, 12)
+    .map((i) => i.title)
+    .join("  \u00A0•\u00A0  ");
+}
+
+export function AlertBanner() {
+  const [tickerText, setTickerText] = useState(FALLBACK);
+  const [hasAlert, setHasAlert] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const res = await fetch("/api/news?limit=12", { cache: "no-store" });
+        if (!res.ok) return;
+        const json = (await res.json()) as NewsPayload;
+        if (cancelled) return;
+        if (json.items?.length) {
+          setTickerText(buildTickerText(json.items));
+          // flag as alert if any headline contains alert keywords
+          const alertWords = /alert|warning|flood|cyclone|landslide|earthquake|red|orange|yellow/i;
+          setHasAlert(json.items.some((i) => alertWords.test(i.title)));
+        }
+      } catch {
+        /* keep fallback */
+      }
+    }
+
+    load();
+    const id = window.setInterval(load, REFRESH_MS);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, []);
+
+  const doubled = `${tickerText} \u00A0\u00A0\u2022\u00A0\u00A0 ${tickerText}`;
+
   return (
     <div
       className="flex items-center gap-2 overflow-hidden border-b border-[var(--gf-panel-border)] px-3 py-2 font-mono text-[0.72rem] text-[var(--gf-text)] md:px-5"
@@ -12,9 +58,9 @@ export function AlertBanner({ text = DEFAULT_TICKER }: { text?: string }) {
     >
       <span
         className="shrink-0 rounded-sm px-1.5 py-0.5 text-[0.58rem] font-bold tracking-wider text-[#0b0f14]"
-        style={{ background: "var(--gf-warn)" }}
+        style={{ background: hasAlert ? "var(--gf-danger)" : "var(--gf-accent)" }}
       >
-        {"\u26A0\uFE0F"} ALERT
+        {hasAlert ? "🚨 BREAKING" : "📰 LATEST"}
       </span>
       <div className="min-w-0 flex-1 overflow-hidden">
         <div className="kt-ticker-track whitespace-nowrap">

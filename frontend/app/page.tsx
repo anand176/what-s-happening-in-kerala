@@ -3,7 +3,11 @@ import { ElephantDivider } from "@/components/chrome/ElephantDivider";
 import { MainNav } from "@/components/chrome/MainNav";
 import { SiteHeader } from "@/components/chrome/SiteHeader";
 import { GrafanaPanel } from "@/components/grafana/GrafanaPanel";
+import { AqiPanel } from "@/components/AqiPanel";
+import { EarthquakePanel } from "@/components/EarthquakePanel";
+import { ForexPanel } from "@/components/ForexPanel";
 import { KeralaMapWeatherLoader } from "@/components/KeralaMapWeatherLoader";
+import { MarketsPanel } from "@/components/MarketsPanel";
 import { NewsSection } from "@/components/NewsSection";
 import { RetailRatesPanel } from "@/components/RetailRatesPanel";
 import { StreamEmbeds } from "@/components/StreamEmbeds";
@@ -33,7 +37,15 @@ function formatMovieDateLine(raw: string): string {
   return raw;
 }
 
-const FEST_EMOJI = ["\u{1F338}", "\u{1F389}", "\u{1F319}", "\u{1F49A}", "\u{1FA94}", "\u2728"];
+// Accent colours cycling per card
+const FEST_ACCENTS = [
+  "#f05a28", // orange
+  "#3fb950", // green
+  "#f5a623", // gold
+  "#7c6af7", // purple
+  "#e24d4d", // red
+  "#29b6f6", // blue
+];
 
 function daysUntilLabel(dateStr: string): string | null {
   const diff = Math.ceil(
@@ -64,9 +76,23 @@ export default function Home() {
       <main className="mx-auto max-w-7xl space-y-5 px-3 py-5 md:px-5">
         <KeralaMapWeatherLoader />
 
+        <StreamEmbeds entries={youtubeStreamEntries} />
+
         <RetailRatesPanel />
 
-        <StreamEmbeds entries={youtubeStreamEntries} />
+        <ElephantDivider emoji={"💹"} />
+
+        <MarketsPanel />
+
+        <ForexPanel />
+
+        <ElephantDivider emoji={"🌫️"} />
+
+        <AqiPanel />
+
+        <EarthquakePanel />
+
+        <ElephantDivider emoji={"📡"} />
 
         <NewsSection />
 
@@ -83,7 +109,7 @@ export default function Home() {
               Add entries in data/festivals.json.
             </p>
           ) : (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
               {festivalItems
                 .filter((item) => daysUntilLabel(item.date) !== null)
                 .map((item, i) => {
@@ -94,32 +120,52 @@ export default function Home() {
                     month: "short",
                     year: "numeric",
                   });
-                  const weekdayLabel = d.toLocaleDateString("en-IN", {
-                    weekday: "long",
-                  });
+                  const weekdayLabel = d.toLocaleDateString("en-IN", { weekday: "long" });
+                  const accent = FEST_ACCENTS[i % FEST_ACCENTS.length];
+                  const isToday = countdown === "Today!";
+                  const isTomorrow = countdown === "Tomorrow!";
                   return (
                     <div
                       key={`${item.title}-${item.date}`}
-                      className="kt-card-hover gf-subpanel relative overflow-hidden p-4 text-center"
+                      className="kt-card-hover gf-subpanel relative flex items-stretch overflow-hidden"
+                      style={{ borderLeft: `3px solid ${accent}` }}
                     >
-                      <span
-                        className="absolute top-0 right-0 left-0 h-0.5 bg-[var(--gf-accent)]"
-                        aria-hidden
-                      />
-                      <span className="mb-2 block text-4xl">
-                        {FEST_EMOJI[i % FEST_EMOJI.length]}
-                      </span>
-                      <div className="text-[0.86rem] font-semibold text-[var(--gf-text)]">
-                        {item.title}
+                      {/* Content */}
+                      <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 px-3 py-3">
+                        <div className="text-[0.88rem] font-semibold leading-snug text-[var(--gf-text)]">
+                          {item.title}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span
+                            className="font-mono text-[0.62rem] font-semibold"
+                            style={{ color: accent }}
+                          >
+                            {dateLabel}
+                          </span>
+                          <span className="font-mono text-[0.6rem] capitalize text-[var(--gf-text-muted)]">
+                            {weekdayLabel}
+                          </span>
+                        </div>
                       </div>
-                      <div className="mt-1 font-ml-serif text-[0.68rem] capitalize text-[var(--gf-text-muted)]">
-                        {weekdayLabel}
-                      </div>
-                      <span className="mt-2 inline-block rounded-sm bg-[var(--gf-accent-soft)] px-2.5 py-0.5 font-mono text-[0.65rem] font-semibold text-[var(--gf-accent)]">
-                        {dateLabel}
-                      </span>
-                      <div className="mt-2 font-mono text-[0.62rem] font-semibold text-[var(--gf-warn)]">
-                        {"\u23F3"} {countdown}
+                      {/* Countdown badge */}
+                      <div className="flex shrink-0 items-center pr-3">
+                        <span
+                          className="rounded-sm px-2 py-1 text-center font-mono text-[0.6rem] font-bold leading-tight"
+                          style={{
+                            background: isToday || isTomorrow ? `${accent}30` : "var(--gf-panel-inner)",
+                            color: isToday || isTomorrow ? accent : "var(--gf-text-muted)",
+                            border: `1px solid ${isToday || isTomorrow ? accent + "66" : "var(--gf-panel-border)"}`,
+                          }}
+                        >
+                          {isToday || isTomorrow ? (
+                            countdown
+                          ) : (
+                            <>
+                              <span className="block text-[0.72rem]">{countdown.replace(" days away", "")}</span>
+                              <span className="block opacity-70">days</span>
+                            </>
+                          )}
+                        </span>
                       </div>
                     </div>
                   );
@@ -194,7 +240,7 @@ export default function Home() {
         </span>
         Kerala Monitor — telemetry for God&apos;s Own Country
         <br />
-        <span className="opacity-90">Data: Open-Meteo · RSS · GeoJSON districts</span>
+        <span className="opacity-90">Kerala Monitor · God&apos;s Own Country</span>
       </footer>
     </div>
   );

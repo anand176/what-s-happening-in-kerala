@@ -1,12 +1,12 @@
 {
-  "asOf": "2026-04-15",
+  "asOf": "2026-05-03",
   "regionLabel": "Kerala — Thiruvananthapuram (IOCL retail, indicative)",
-  "petrolInrPerLitre": 100.78,
-  "dieselInrPerLitre": 89.62,
+  "petrolInrPerLitre": 106.45,
+  "dieselInrPerLitre": 96.47,
   "gold22Carat": {
-    "inrPerGram": 6840,
+    "inrPerGram": 13835,
     "pavanGrams": 8,
-    "inrPerPavan": 54720
+    "inrPerPavan": 110680
   },
-  "disclaimer": "1 pavan = 8 g."
+  "disclaimer": "1 pavan = 8 g · 22 carat."
 }

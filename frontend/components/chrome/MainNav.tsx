@@ -4,8 +4,12 @@ import { useCallback, useEffect, useState } from "react";
 
 const LINKS = [
   { href: "#districts", label: "Districts", emoji: "\u{1F5FA}\uFE0F" },
-  { href: "#retail-rates", label: "Fuel & gold", emoji: "\u26FD" },
   { href: "#live-news", label: "Live News", emoji: "\u{1F4FA}" },
+  { href: "#retail-rates", label: "Fuel & gold", emoji: "\u26FD" },
+  { href: "#markets", label: "Markets", emoji: "\u{1F4C8}" },
+  { href: "#forex", label: "Forex", emoji: "\u{1F4B1}" },
+  { href: "#aqi", label: "Air quality", emoji: "\u{1F32B}\uFE0F" },
+  { href: "#earthquakes", label: "Seismic", emoji: "\u{1F30D}" },
   { href: "#latest-news", label: "Headlines", emoji: "\u{1F4F0}" },
   { href: "#weather-section", label: "Weather", emoji: "\u{1F327}\uFE0F" },
   { href: "#festivals", label: "Festivals", emoji: "\u{1F389}" },

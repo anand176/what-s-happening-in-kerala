@@ -111,12 +111,7 @@ export function NewsSection() {
       className="kt-animate-in kt-stagger-3 flex max-h-[min(85vh,900px)] scroll-mt-[120px] flex-col"
       contentClassName="flex min-h-0 flex-1 flex-col !pb-3"
     >
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        {payload.sources ? (
-          <p className="font-mono text-[0.68rem] text-[var(--gf-live)]">{payload.sources}</p>
-        ) : (
-          <span />
-        )}
+      <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
         <div className="flex flex-wrap items-center gap-2">
           {updatedAt && (
             <span className="font-mono text-[0.68rem] text-[var(--gf-text-muted)]">
@@ -176,23 +171,6 @@ export function NewsSection() {
           );
         })}
       </ul>
-      {payload.feedUrls?.length > 0 && (
-        <div className="mt-3 space-y-1 border-t border-[var(--gf-panel-border)] pt-3 font-mono text-[0.68rem] text-[var(--gf-text-muted)]">
-          <p className="font-semibold tracking-wide text-[var(--gf-text)] uppercase">Sources</p>
-          {payload.feedUrls.map((f) => (
-            <div key={f.url}>
-              <a
-                className="break-all font-medium text-[var(--gf-live)] hover:underline"
-                href={f.url}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {f.name}
-              </a>
-            </div>
-          ))}
-        </div>
-      )}
     </GrafanaPanel>
   );
 }
