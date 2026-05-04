@@ -9,7 +9,7 @@ export const youtubeChannels = [
   { name: "Reporter TV",       url: "https://www.youtube.com/watch?v=nObUcHKZEGY" },
   { name: "Big TV",            url: "https://www.youtube.com/watch?v=AT0fo8Ty4jo" },
   { name: "MediaOne TV",       url: "https://www.youtube.com/watch?v=-8d8-c0yvyU" },
-  { name: "News18 Kerala",     url: "https://www.youtube.com/watch?v=aPu0o6Lm0cg" },
+  { name: "News18 Kerala",     url: "https://www.youtube.com/watch?v=7Y-MMzEcjeA" },
   { name: "Kairali News",      url: "https://www.youtube.com/watch?v=yiiqRHY1Bl8" },
 ] as const;
 
