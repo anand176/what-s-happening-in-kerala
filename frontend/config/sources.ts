@@ -3,7 +3,7 @@ import { youtubeVideoIdFromUrl } from "@/lib/youtube";
 /** Kerala news YouTube live streams — shown in order. */
 export const youtubeChannels = [
   { name: "Asianet News",      url: "https://www.youtube.com/watch?v=s0LLVQeMmtU" },
-  { name: "Manorama News",     url: "https://www.youtube.com/watch?v=3miKzKlmA-4" },
+  { name: "Manorama News",     url: "https://www.youtube.com/watch?v=tgBTspqA5nY" },
   { name: "Mathrubhumi News",  url: "https://www.youtube.com/watch?v=YGEgelAiUf0" },
   { name: "24 News Malayalam", url: "https://www.youtube.com/watch?v=1wECsnGZcfc" },
   { name: "Reporter TV",       url: "https://www.youtube.com/watch?v=nObUcHKZEGY" },
