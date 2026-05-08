@@ -7,6 +7,7 @@ import { GrafanaDataRow } from "@/components/GrafanaDataRow";
 import { KeralaMapWeatherLoader } from "@/components/KeralaMapWeatherLoader";
 import { NewsSection } from "@/components/NewsSection";
 import { StreamEmbeds } from "@/components/StreamEmbeds";
+import { GITHUB_REPO_URL } from "@/config/site";
 import { youtubeStreamEntries } from "@/config/sources";
 import festivals from "@/data/festivals.json";
 import movies from "@/data/movies.json";
@@ -210,6 +211,24 @@ export default function Home() {
         Kerala Monitor — telemetry for God&apos;s Own Country
         <br />
         <span className="opacity-90">Kerala Monitor · God&apos;s Own Country</span>
+        <div className="mt-5 flex justify-center">
+          <a
+            href={GITHUB_REPO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group inline-flex items-center gap-2 rounded-md border border-[var(--gf-panel-border)] bg-[var(--gf-panel-inner)] px-4 py-2.5 font-mono text-[0.68rem] font-semibold tracking-wide text-[var(--gf-text)] uppercase shadow-[inset_0_0_0_1px_rgba(240,90,40,0.12)] transition-[color,background-color,border-color,box-shadow] hover:border-[var(--gf-accent)]/45 hover:bg-[var(--gf-accent-soft)] hover:text-[var(--gf-accent)]"
+          >
+            <svg
+              className="size-4 shrink-0 opacity-90 group-hover:opacity-100"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden
+            >
+              <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.113.825-.262.825-.585 0-.292-.015-1.263-.015-2.295-3.015.653-3.653-.735-3.885-1.403-.131-.33-.698-1.403-1.188-1.688-.405-.218-.99-.756-.015-.771.918-.014 1.575.844 1.791 1.188 1.05 1.744 2.73 1.253 3.39.948.098-.746.405-1.253.735-1.543-2.565-.293-5.265-1.283-5.265-5.698 0-1.26.45-2.288 1.185-3.096-.12-.293-.51-1.47.113-3.065 0 0 .968-.307 3.17 1.178a10.95 10.95 0 0 1 5.7 0c2.202-1.485 3.165-1.178 3.165-1.178.627 1.595.233 2.772.118 3.065.735.808 1.18 1.83 1.18 3.096 0 4.425-2.708 5.398-5.28 5.688.42.36.795 1.065.795 2.145 0 1.548-.015 2.79-.015 3.165 0 .323.225.708.825.585A11.987 11.987 0 0 0 24 12c0-6.63-5.37-12-12-12Z" />
+            </svg>
+            <span>Star on GitHub</span>
+          </a>
+        </div>
       </footer>
     </div>
   );
