@@ -1,11 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { GeoJSON, MapContainer, useMap } from "react-leaflet";
+import { GeoJSON, MapContainer, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
 import type { StyleFunction } from "leaflet";
 import type { Feature, FeatureCollection, GeoJsonObject } from "geojson";
 import { GrafanaPanel } from "@/components/grafana/GrafanaPanel";
+import { PanelRefreshButton } from "@/components/grafana/PanelRefreshButton";
 import { keralaMainCities, openMeteoMultiCityUrl } from "@/config/kerala-cities";
 import { weatherCodeLabel } from "@/lib/weather";
 import type { AqiPayload } from "@/app/api/aqi/route";
@@ -26,13 +27,14 @@ type ForecastBlock = {
 
 // ─── AQI helpers ──────────────────────────────────────────────────────────────
 
+/** European AQI (EAQI) 0–500 → label + colour */
 function aqiMeta(idx: number | null): { label: string; color: string } {
-  if (idx === null) return { label: "N/A",        color: "var(--mute)" };
-  if (idx <= 20)   return { label: "Good",        color: "#103c25" };
-  if (idx <= 40)   return { label: "Fair",        color: "#2e7d32" };
-  if (idx <= 60)   return { label: "Moderate",    color: "#f5a623" };
+  if (idx === null) return { label: "N/A",        color: "var(--gf-text-muted)" };
+  if (idx <= 20)   return { label: "Good",        color: "var(--gf-live)" };
+  if (idx <= 40)   return { label: "Fair",        color: "#a8d08d" };
+  if (idx <= 60)   return { label: "Moderate",    color: "var(--gf-warn)" };
   if (idx <= 80)   return { label: "Poor",        color: "#e07b39" };
-  if (idx <= 100)  return { label: "Very Poor",   color: "var(--primary)" };
+  if (idx <= 100)  return { label: "Very Poor",   color: "var(--gf-danger)" };
   return            { label: "Ext. Poor",   color: "#9b1c1c" };
 }
 
@@ -40,12 +42,12 @@ function pm25Bar(val: number | null) {
   const pct = val === null ? 0 : Math.min(100, (val / 75) * 100);
   const color =
     val === null
-      ? "var(--hairline-soft)"
+      ? "var(--gf-panel-border)"
       : val <= 15
-        ? "#103c25"
+        ? "var(--gf-live)"
         : val <= 35
-          ? "#f5a623"
-          : "var(--primary)";
+          ? "var(--gf-warn)"
+          : "var(--gf-danger)";
   return { pct, color };
 }
 
@@ -56,7 +58,7 @@ function FitBounds({ data }: { data: FeatureCollection }) {
   useEffect(() => {
     const gj = L.geoJSON(data as GeoJsonObject);
     const b = gj.getBounds();
-    if (b.isValid()) map.fitBounds(b, { padding: [24, 24], maxZoom: 10 });
+    if (b.isValid()) map.fitBounds(b, { padding: [28, 28], maxZoom: 10 });
   }, [map, data]);
   return null;
 }
@@ -70,23 +72,6 @@ function InvalidateSize() {
   return null;
 }
 
-const DISTRICT_COLORS: Record<string, string> = {
-  "Kasaragod": "hsl(14, 85%, 82%)",
-  "Kannur": "hsl(35, 85%, 82%)",
-  "Wayanad": "hsl(85, 65%, 82%)",
-  "Kozhikode": "hsl(145, 60%, 82%)",
-  "Malappuram": "hsl(170, 65%, 82%)",
-  "Palakkad": "hsl(195, 75%, 82%)",
-  "Thrissur": "hsl(215, 80%, 84%)",
-  "Ernakulam": "hsl(240, 70%, 84%)",
-  "Idukki": "hsl(270, 65%, 84%)",
-  "Kottayam": "hsl(300, 60%, 84%)",
-  "Alappuzha": "hsl(325, 75%, 84%)",
-  "Pathanamthitta": "hsl(345, 80%, 84%)",
-  "Kollam": "hsl(9, 85%, 83%)",
-  "Thiruvananthapuram": "hsl(50, 80%, 82%)",
-};
-
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function KeralaMapWeather() {
@@ -95,37 +80,51 @@ export function KeralaMapWeather() {
   const [selectedDistrict, setSelectedDistrict] = useState<string>("Ernakulam");
   const [forecasts, setForecasts] = useState<ForecastBlock[] | null>(null);
   const [weatherErr, setWeatherErr] = useState<string | null>(null);
+
+  // AQI state — fetched once for all districts
   const [aqiData, setAqiData] = useState<AqiPayload | null>(null);
+
+  // Wikipedia state — fetched per selected district
   const [wiki, setWiki] = useState<WikiPayload | null>(null);
   const [wikiLoading, setWikiLoading] = useState(false);
   const [wikiDistrict, setWikiDistrict] = useState<string>("");
 
-  useEffect(() => {
-    fetch("/kerala.geojson")
-      .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
-      .then((j: FeatureCollection) => setGeo(j))
-      .catch(() => { setGeo(null); setGeoErr(true); });
+  // ── GeoJSON ──
+  const loadGeo = useCallback(async () => {
+    setGeoErr(false);
+    try {
+      const r = await fetch(`/kerala.geojson?t=${Date.now()}`, { cache: "no-store" });
+      if (!r.ok) throw new Error(String(r.status));
+      const j = (await r.json()) as FeatureCollection;
+      setGeo(j);
+    } catch {
+      setGeo(null);
+      setGeoErr(true);
+    }
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch(openMeteoMultiCityUrl());
-        if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-        const json = (await res.json()) as ForecastBlock[] | ForecastBlock;
-        const list = Array.isArray(json) ? json : [json];
-        if (!cancelled) { setForecasts(list); setWeatherErr(null); }
-      } catch (e) {
-        if (!cancelled) {
-          setForecasts(null);
-          setWeatherErr(e instanceof Error ? e.message : "Weather request failed");
-        }
-      }
-    })();
-    return () => { cancelled = true; };
+    loadGeo().catch(() => {});
+  }, [loadGeo]);
+  const loadWeather = useCallback(async () => {
+    try {
+      const res = await fetch(openMeteoMultiCityUrl(), { cache: "no-store" });
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      const json = (await res.json()) as ForecastBlock[] | ForecastBlock;
+      const list = Array.isArray(json) ? json : [json];
+      setForecasts(list);
+      setWeatherErr(null);
+    } catch (e) {
+      setForecasts(null);
+      setWeatherErr(e instanceof Error ? e.message : "Weather request failed");
+    }
   }, []);
 
+  useEffect(() => {
+    loadWeather().catch(() => {});
+  }, [loadWeather]);
+
+  // ── AQI (all districts, refresh every 10 min) ──
   const loadAqi = useCallback(async () => {
     try {
       const res = await fetch(`/api/aqi?t=${Date.now()}`, { cache: "no-store" });
@@ -134,12 +133,19 @@ export function KeralaMapWeather() {
     } catch { /* keep previous */ }
   }, []);
 
-  useEffect(() => { loadAqi(); }, [loadAqi]);
   useEffect(() => {
-    const id = window.setInterval(loadAqi, 10 * 60 * 1000);
+    loadAqi().catch(() => {});
+  }, [loadAqi]);
+  useEffect(() => {
+    const id = window.setInterval(() => { void loadAqi(); }, 10 * 60 * 1000);
     return () => window.clearInterval(id);
   }, [loadAqi]);
 
+  const reloadDashboard = useCallback(() => {
+    void Promise.all([loadGeo(), loadWeather(), loadAqi()]);
+  }, [loadGeo, loadWeather, loadAqi]);
+
+  // ── Wikipedia (per selected district) ──
   useEffect(() => {
     if (!selectedDistrict || selectedDistrict === wikiDistrict) return;
     let cancelled = false;
@@ -157,15 +163,15 @@ export function KeralaMapWeather() {
     return () => { cancelled = true; };
   }, [selectedDistrict, wikiDistrict]);
 
+  // ── Derived ──
   const districtStyle = useCallback(
     (feature?: Feature) => {
-      const name = (feature?.properties as { district?: string } | null)?.district || "";
+      const name = (feature?.properties as { district?: string } | null)?.district;
       const sel = name === selectedDistrict;
-      const baseColor = DISTRICT_COLORS[name] || "#fafafa";
       return {
-        fillColor: baseColor,
-        fillOpacity: sel ? 0.9 : 0.6,
-        color: sel ? "var(--primary)" : "var(--stone)",
+        fillColor: sel ? "#f05a28" : "#2d4a52",
+        fillOpacity: sel ? 0.45 : 0.28,
+        color: sel ? "#ff8a5c" : "#4a6670",
         weight: sel ? 2.5 : 1,
       };
     },
@@ -184,148 +190,263 @@ export function KeralaMapWeather() {
   const detail = cityRows.find((c) => c.district === selectedDistrict);
   const detailAqi = aqiData?.cities.find((c) => c.district === selectedDistrict);
 
-  const mlMapSub = "Districts map & weather";
+  const mlMapSub = "ജില്ലകൾ മാപ്പും കാലാവസ്ഥയും";
 
   return (
     <GrafanaPanel
       id="districts"
       title="District situation"
       subtitle={mlMapSub}
-      className="scroll-mt-[120px]"
+      className="kt-animate-in scroll-mt-[120px]"
+      rightSlot={
+        <div className="flex shrink-0 items-center gap-2">
+          <PanelRefreshButton
+            onClick={reloadDashboard}
+            ariaLabel="Refresh map, district weather, and air quality data"
+          />
+          <span className="font-mono text-[10px] font-semibold tracking-wider text-[var(--gf-text-muted)]">
+            WX / AQI / GEO
+          </span>
+        </div>
+      }
     >
-      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-3">
-        {/* Map with district selector overlay */}
-        <div className="relative border border-[var(--hairline-soft)] rounded-[var(--radius-md)] overflow-hidden">
-          <div className="relative h-[min(58vh,600px)] min-h-[400px] w-full bg-[var(--canvas)]">
-            {geo ? (
-              <MapContainer
-                center={[10.15, 76.35]}
-                zoom={7}
-                className="h-full w-full [&_.leaflet-container]:h-full [&_.leaflet-container]:w-full [&_.leaflet-container]:font-sans"
-                style={{ height: "100%", width: "100%" }}
-                scrollWheelZoom={false}
-                zoomControl={false}
-                doubleClickZoom={false}
-                dragging={false}
-                touchZoom={false}
-                boxZoom={false}
-                keyboard={false}
-              >
-                <FitBounds data={geo} />
-                <InvalidateSize />
-                <GeoJSON
-                  data={geo}
-                  style={districtStyle as StyleFunction}
-                  onEachFeature={(feature, layer) => {
-                    const name = (feature.properties as { district?: string })?.district;
-                    if (name) {
-                      layer.bindTooltip(name, { sticky: true, direction: "center", opacity: 0.95 });
-                    }
-                    layer.on("click", () => { if (name) setSelectedDistrict(name); });
-                  }}
-                />
-              </MapContainer>
-            ) : !geoErr ? (
-              <div className="flex h-full items-center justify-center text-sm text-[var(--mute)]">
-                Loading map…
+      <p className="mb-4 text-[0.8rem] text-[var(--gf-text-muted)]">
+        Click a district on the map or use the chips below — weather, air quality and a brief will load for the selected district.
+      </p>
+
+      <div className="grid gap-6 lg:grid-cols-5">
+        {/* ── Left: Map + Wikipedia brief below ── */}
+        <div className="relative z-0 flex flex-col gap-4 lg:col-span-3">
+          {geoErr && (
+            <p className="text-[0.82rem] text-[var(--gf-warn)]">
+              Could not load district boundaries. Try refreshing.
+            </p>
+          )}
+          <div className="gf-map-shell">
+            <div className="relative h-[min(58vh,600px)] min-h-[400px] w-full">
+              {geo ? (
+                <MapContainer
+                  center={[10.15, 76.35]}
+                  zoom={7}
+                  className="h-full w-full [&_.leaflet-container]:h-full [&_.leaflet-container]:w-full [&_.leaflet-container]:font-sans"
+                  style={{ height: "100%", width: "100%" }}
+                  scrollWheelZoom
+                  zoomControl
+                  doubleClickZoom
+                  dragging
+                  minZoom={6}
+                  maxZoom={15}
+                >
+                  <TileLayer
+                    attribution='&copy; OpenStreetMap &copy; CARTO'
+                    url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                  />
+                  <FitBounds data={geo} />
+                  <InvalidateSize />
+                  <GeoJSON
+                    data={geo}
+                    style={districtStyle as StyleFunction}
+                    onEachFeature={(feature, layer) => {
+                      const name = (feature.properties as { district?: string })?.district;
+                      if (name) {
+                        layer.bindTooltip(name, { sticky: true, direction: "center", opacity: 0.95 });
+                      }
+                      layer.on("click", () => { if (name) setSelectedDistrict(name); });
+                    }}
+                  />
+                </MapContainer>
+              ) : !geoErr ? (
+                <div className="flex h-full items-center justify-center text-[0.85rem] text-[var(--gf-text-muted)]">
+                  Loading map…
+                </div>
+              ) : null}
+            </div>
+          </div>
+          <p className="font-mono text-[0.65rem] text-[var(--gf-text-muted)]">
+            scroll to zoom · click district for details
+          </p>
+
+          {/* ── Wikipedia brief — fills the space below the map ── */}
+          <div className="gf-subpanel flex-1 p-4">
+            <p className="mb-3 font-mono text-[0.6rem] font-semibold tracking-widest text-[var(--gf-accent)] uppercase">
+              District brief — {selectedDistrict}
+            </p>
+            {wikiLoading && (
+              <div className="flex items-center gap-2 text-[0.8rem] text-[var(--gf-text-muted)]">
+                <div className="kt-spinner !mb-0 !h-4 !w-4 !border-2" />
+                Loading…
               </div>
-            ) : (
-              <p className="p-4 text-sm text-[var(--error)]">
-                Could not load district boundaries. Try refreshing.
-              </p>
+            )}
+            {!wikiLoading && wiki && !wiki.error && (
+              <div className="flex gap-3">
+                {wiki.thumbnail && (
+                  <img
+                    src={wiki.thumbnail}
+                    alt={wiki.title}
+                    className="h-20 w-20 shrink-0 rounded-sm object-cover border border-[var(--gf-panel-border)]"
+                    loading="lazy"
+                  />
+                )}
+                <div className="min-w-0">
+                  <p className="text-[0.82rem] leading-relaxed text-[var(--gf-text)]">
+                    {wiki.extract}
+                  </p>
+                  {wiki.pageUrl && (
+                    <a
+                      href={wiki.pageUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 inline-block font-mono text-[0.65rem] text-[var(--gf-live)] hover:underline"
+                    >
+                      Read more →
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+            {!wikiLoading && wiki?.error && (
+              <p className="text-[0.78rem] text-[var(--gf-text-muted)]">{wiki.error}</p>
+            )}
+            {!wikiLoading && !wiki && (
+              <p className="text-[0.78rem] text-[var(--gf-text-muted)]">Select a district to load its brief.</p>
             )}
           </div>
         </div>
 
-        {/* Selected district details */}
-        <div className="space-y-3">
-          {/* Weather & AQI */}
-          <div className="sub-pin">
-            <h3 className="mb-2 font-mono text-[10px] font-bold tracking-widest text-[var(--primary)] uppercase">
-              {selectedDistrict}{detail?.cityLabel ? ` · ${detail.cityLabel}` : ""}
-            </h3>
-            {detail?.weather ? (
-              <div className="space-y-3">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="text-[2rem] font-bold tracking-tight text-[var(--ink)] leading-none">
-                      {Math.round(detail.weather.temperature)}°C
-                    </div>
-                    <div className="text-[12px] text-[var(--mute)] mt-1 font-semibold">
-                      {weatherCodeLabel(detail.weather.weathercode)}
-                    </div>
-                  </div>
-                  <div className="text-right text-[10px] text-[var(--mute)]">
-                    <div>Wind: <span className="font-bold text-[var(--ink)]">{detail.weather.windspeed} km/h</span></div>
-                    <div className="mt-0.5">Obs: <span className="font-bold text-[var(--ink)]">{detail.weather.time}</span></div>
-                  </div>
-                </div>
+        {/* ── Right: Weather + AQI + district chips ── */}
+        <div
+          id="weather-section"
+          className="flex scroll-mt-[120px] flex-col gap-4 lg:col-span-2"
+        >
+          {weatherErr && (
+            <p className="rounded-sm border border-[var(--gf-danger)]/40 bg-[rgba(226,77,77,0.12)] px-3 py-2 text-[0.82rem] text-[var(--gf-danger)]">
+              {weatherErr}
+            </p>
+          )}
 
-                {detailAqi && (
-                  <div className="pt-2 border-t border-[var(--hairline-soft)]">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-[12px] font-semibold text-[var(--ink)]">European AQI</span>
-                      <span className="text-[13px] font-bold" style={{ color: aqiMeta(detailAqi.aqi_index).color }}>
-                        {detailAqi.aqi_index} ({aqiMeta(detailAqi.aqi_index).label})
-                      </span>
+          {/* Weather + AQI card */}
+          <div className="gf-subpanel overflow-hidden">
+            <div className="border-b border-[var(--gf-panel-border)] px-4 py-3">
+              <p className="font-mono text-[0.68rem] font-medium tracking-wider text-[var(--gf-text-muted)] uppercase">
+                {selectedDistrict}{detail?.cityLabel ? ` · ${detail.cityLabel}` : ""}
+              </p>
+            </div>
+            <div className="space-y-4 p-4">
+              {/* Weather */}
+              {detail?.weather ? (
+                <div>
+                  <p className="mb-1 font-mono text-[0.6rem] font-semibold tracking-widest text-[var(--gf-accent)] uppercase">
+                    Weather
+                  </p>
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <div className="font-mono text-[2.6rem] font-bold leading-none text-[var(--gf-accent)]">
+                        {Math.round(detail.weather.temperature)}°C
+                      </div>
+                      <div className="mt-1 text-[0.85rem] text-[var(--gf-text)]">
+                        {weatherCodeLabel(detail.weather.weathercode)}
+                      </div>
                     </div>
-                    <div className="space-y-1 mt-1.5">
-                      <div className="flex justify-between text-[10px] text-[var(--mute)]">
-                        <span>PM2.5</span>
-                        <span>{detailAqi.pm2_5 !== null ? `${detailAqi.pm2_5.toFixed(1)} µg/m³` : "—"}</span>
-                      </div>
-                      <div className="h-1.5 w-full bg-[var(--hairline-soft)] rounded-full overflow-hidden">
-                        <div className="h-full rounded-full" style={{ width: `${pm25Bar(detailAqi.pm2_5).pct}%`, backgroundColor: pm25Bar(detailAqi.pm2_5).color }} />
-                      </div>
-                      <div className="flex justify-between text-[10px] text-[var(--mute)]">
-                        <span>PM10</span>
-                        <span>{detailAqi.pm10 !== null ? `${detailAqi.pm10.toFixed(1)} µg/m³` : "—"}</span>
-                      </div>
-                    </div>
+                    <div className="text-5xl text-[var(--gf-text-muted)]" aria-hidden />
                   </div>
-                )}
-              </div>
-            ) : (
-              <p className="text-[12px] text-[var(--mute)]">Weather loading…</p>
-            )}
+                  <dl className="mt-3 grid grid-cols-2 gap-2">
+                    <div className="rounded-sm border border-[var(--gf-panel-border)] bg-[var(--gf-panel-inner)] px-2 py-2 text-center">
+                      <dt className="font-mono text-[0.6rem] text-[var(--gf-text-muted)] uppercase">Wind</dt>
+                      <dd className="font-mono font-medium text-[var(--gf-live)]">{detail.weather.windspeed} km/h</dd>
+                    </div>
+                    <div className="rounded-sm border border-[var(--gf-panel-border)] bg-[var(--gf-panel-inner)] px-2 py-2 text-center">
+                      <dt className="font-mono text-[0.6rem] text-[var(--gf-text-muted)] uppercase">Obs. time</dt>
+                      <dd className="font-mono font-medium text-[var(--gf-live)] text-[0.68rem]">{detail.weather.time}</dd>
+                    </div>
+                  </dl>
+                </div>
+              ) : !forecasts?.length && !weatherErr ? (
+                <p className="text-[0.8rem] text-[var(--gf-text-muted)]">Weather loading…</p>
+              ) : !forecasts?.length && weatherErr ? (
+                <p className="text-[0.8rem] text-[var(--gf-warn)]">{weatherErr}</p>
+              ) : null}
+
+              {/* AQI */}
+              {detailAqi ? (
+                <div>
+                  <p className="mb-2 font-mono text-[0.6rem] font-semibold tracking-widest text-[var(--gf-accent)] uppercase">
+                    Air quality
+                  </p>
+                  {(() => {
+                    const aqiInfo = aqiMeta(detailAqi.aqi_index);
+                    const bar = pm25Bar(detailAqi.pm2_5);
+                    return (
+                      <>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[0.82rem] text-[var(--gf-text)]">European AQI</span>
+                          <span
+                            className="rounded-sm px-2 py-0.5 font-mono text-[0.62rem] font-bold"
+                            style={{ color: aqiInfo.color, background: `${aqiInfo.color}22`, border: `1px solid ${aqiInfo.color}55` }}
+                          >
+                            {aqiInfo.label}
+                          </span>
+                        </div>
+                        <div className="mt-2">
+                          <div className="mb-1 flex justify-between font-mono text-[0.6rem] text-[var(--gf-text-muted)]">
+                            <span>PM2.5</span>
+                            <span>{detailAqi.pm2_5 !== null ? `${detailAqi.pm2_5.toFixed(1)} µg/m³` : "—"}</span>
+                          </div>
+                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--gf-panel-border)]">
+                            <div className="h-full rounded-full transition-all duration-500" style={{ width: `${bar.pct}%`, background: bar.color }} />
+                          </div>
+                        </div>
+                        <div className="mt-1.5 flex justify-between font-mono text-[0.6rem] text-[var(--gf-text-muted)]">
+                          <span>PM10</span>
+                          <span>{detailAqi.pm10 !== null ? `${detailAqi.pm10.toFixed(1)} µg/m³` : "—"}</span>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              ) : !aqiData ? (
+                <p className="text-[0.75rem] text-[var(--gf-text-muted)]">AQI loading…</p>
+              ) : null}
+
+              <p className="font-mono text-[0.6rem] text-[var(--gf-text-muted)]">
+                Last updated: {detail?.weather?.time ?? "—"}
+              </p>
+            </div>
           </div>
 
-          {/* Wiki brief */}
-          <div className="sub-pin flex flex-col justify-between">
-            <div>
-              <h3 className="mb-2 font-mono text-[10px] font-bold tracking-widest text-[var(--primary)] uppercase">
-                District Brief
-              </h3>
-              {wikiLoading ? (
-                <div className="text-[12px] text-[var(--mute)]">Loading summary…</div>
-              ) : wiki && !wiki.error ? (
-                <div className="flex gap-2">
-                  {wiki.thumbnail && (
-                    <img
-                      src={wiki.thumbnail}
-                      alt={wiki.title}
-                      className="h-14 w-14 shrink-0 rounded-[var(--radius-sm)] object-cover bg-[var(--surface-soft)]"
-                      loading="lazy"
-                    />
-                  )}
-                  <p className="text-[12px] leading-relaxed text-[var(--body)] line-clamp-4">
-                    {wiki.extract}
-                  </p>
-                </div>
-              ) : (
-                <p className="text-[12px] text-[var(--mute)]">{wiki?.error || "Select a district."}</p>
-              )}
+          {/* District chips */}
+          <div className="flex-1">
+            <p className="mb-2 font-mono text-[0.68rem] font-semibold tracking-wide text-[var(--gf-text-muted)] uppercase">
+              All districts
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {cityRows.map((c) => {
+                const w = c.weather;
+                const sel = c.district === selectedDistrict;
+                const chipAqi = aqiMeta(c.aqi?.aqi_index ?? null);
+                return (
+                  <button
+                    key={c.district}
+                    type="button"
+                    onClick={() => setSelectedDistrict(c.district)}
+                    className="kt-card-hover rounded-sm border px-2.5 py-1.5 text-left text-[0.72rem] transition-transform"
+                    style={{
+                      borderColor: sel ? "var(--gf-accent)" : "var(--gf-panel-border)",
+                      background: sel ? "var(--gf-accent-soft)" : "var(--gf-panel-inner)",
+                      color: sel ? "var(--gf-text)" : "var(--gf-text-muted)",
+                    }}
+                  >
+                    <span className="font-semibold">{c.district}</span>
+                    {w ? <span className="ml-1.5 tabular-nums">{Math.round(w.temperature)}°</span> : null}
+                    <span className="mt-0.5 block text-[0.65rem] opacity-85">{c.cityLabel}</span>
+                    {c.aqi && (
+                      <span className="mt-0.5 block font-mono text-[0.58rem] font-semibold" style={{ color: chipAqi.color }}>
+                        AQI: {chipAqi.label}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
-            {wiki?.pageUrl && (
-              <a
-                href={wiki.pageUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-2 text-[10px] font-bold text-[var(--primary)] hover:underline inline-flex items-center"
-              >
-                Read on Wikipedia →
-              </a>
-            )}
           </div>
         </div>
       </div>

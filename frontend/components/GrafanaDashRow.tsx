@@ -1,28 +1,30 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
-import { GrafanaPanel } from "@/components/grafana/GrafanaPanel";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import type { AqiPayload } from "@/app/api/aqi/route";
 import type { QuakePayload } from "@/app/api/earthquakes/route";
+import { GrafanaMiniPanel } from "@/components/grafana/GrafanaMiniPanel";
+import { PanelRefreshButton } from "@/components/grafana/PanelRefreshButton";
 import { keralaMainCities, openMeteoMultiCityUrl } from "@/config/kerala-cities";
 import { weatherCodeLabel } from "@/lib/weather";
 
+/** European AQI (EAQI) 0–500 → label + colour */
 function aqiMeta(idx: number | null): { label: string; color: string } {
-  if (idx === null) return { label: "N/A", color: "var(--mute)" };
-  if (idx <= 20) return { label: "Good", color: "var(--primary)" };
-  if (idx <= 40) return { label: "Fair", color: "#a8d08d" };
-  if (idx <= 60) return { label: "Moderate", color: "var(--warning-deep)" };
-  if (idx <= 80) return { label: "Poor", color: "#e07b39" };
-  if (idx <= 100) return { label: "Very Poor", color: "var(--error)" };
-  return { label: "Ext. Poor", color: "#9b1c1c" };
+  if (idx === null) return { label: "N/A",        color: "var(--gf-text-muted)" };
+  if (idx <= 20)   return { label: "Good",        color: "var(--gf-live)" };
+  if (idx <= 40)   return { label: "Fair",        color: "#a8d08d" };
+  if (idx <= 60)   return { label: "Moderate",    color: "var(--gf-warn)" };
+  if (idx <= 80)   return { label: "Poor",        color: "#e07b39" };
+  if (idx <= 100)  return { label: "Very Poor",   color: "var(--gf-danger)" };
+  return            { label: "Ext. Poor",   color: "#9b1c1c" };
 }
 
 function magColor(mag: number): string {
-  if (mag < 2) return "var(--mute)";
-  if (mag < 3) return "var(--primary)";
-  if (mag < 4) return "var(--warning-deep)";
+  if (mag < 2) return "var(--gf-text-muted)";
+  if (mag < 3) return "var(--gf-live)";
+  if (mag < 4) return "var(--gf-warn)";
   if (mag < 5) return "#e07b39";
-  return "var(--error)";
+  return "var(--gf-danger)";
 }
 
 function timeAgo(epochMs: number): string {
@@ -36,215 +38,205 @@ function timeAgo(epochMs: number): string {
 
 function Spinner() {
   return (
-    <div className="flex items-center justify-center py-8">
-      <div className="spinner" />
+    <div className="flex items-center justify-center py-6">
+      <div className="kt-spinner" />
     </div>
   );
 }
 
 // ─── City Weather ─────────────────────────────────────────────────────────────
 
-type WeatherRow = { district: string; temperature: number; weathercode: number; windspeed: number };
+type WeatherRow = {
+  district: string;
+  temperature: number;
+  weathercode: number;
+  windspeed: number;
+};
 
 function CityWeatherPanel() {
-  const [rows, setRows] = useState<WeatherRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const { data: rows = [], isPending, refetch } = useQuery({
+    queryKey: ["panels", "openmeteo-cities-strip"],
+    queryFn: async () => {
+      const json = await fetch(openMeteoMultiCityUrl(), { cache: "no-store" }).then((r) => r.json());
+      const list = Array.isArray(json) ? json : [json];
+      return keralaMainCities.map((c, i) => ({
+        district: c.district,
+        temperature: list[i]?.current_weather?.temperature ?? 0,
+        weathercode: list[i]?.current_weather?.weathercode ?? 0,
+        windspeed: list[i]?.current_weather?.windspeed ?? 0,
+      })) as WeatherRow[];
+    },
+    placeholderData: keepPreviousData,
+    refetchInterval: 10 * 60 * 1000,
+  });
 
-  const load = useCallback(() => {
-    setRefreshing(true);
-    fetch(openMeteoMultiCityUrl())
-      .then((r) => r.json())
-      .then((json) => {
-        const list = Array.isArray(json) ? json : [json];
-        setRows(keralaMainCities.map((c, i) => ({
-          district: c.district,
-          temperature: list[i]?.current_weather?.temperature ?? 0,
-          weathercode: list[i]?.current_weather?.weathercode ?? 0,
-          windspeed: list[i]?.current_weather?.windspeed ?? 0,
-        })));
-        setLoading(false);
-        setRefreshing(false);
-      })
-      .catch(() => { setLoading(false); setRefreshing(false); });
-  }, []);
-
-  useEffect(() => { load(); }, [load]);
+  const liveBadge = (
+    <span className="rounded-sm bg-[var(--gf-live)] px-1.5 py-0.5 font-mono text-[0.55rem] font-bold text-black">
+      LIVE
+    </span>
+  );
 
   return (
-    <GrafanaPanel 
-      title="City Weather" 
-      rightSlot={
-        <div className="flex items-center gap-2">
-          <span className="badge badge-live text-[9px]">LIVE</span>
-          <button
-            type="button"
-            onClick={load}
-            disabled={refreshing}
-            className="btn-secondary h-7 px-2.5 font-mono text-[10px] disabled:opacity-50"
-          >
-            {refreshing ? "⟳" : "↻"}
-          </button>
-        </div>
-      }
-      id="weather-section" 
-      className="scroll-mt-[140px]"
+    <GrafanaMiniPanel
+      title="City Weather"
+      badge={liveBadge}
+      id="weather-section"
+      actions={<PanelRefreshButton onClick={() => void refetch()} ariaLabel="Refresh city weather" />}
     >
-      {loading ? <Spinner /> : (
-        <div className="divide-y divide-[var(--hairline-soft)]">
+      {isPending ? (
+        <Spinner />
+      ) : (
+        <div className="divide-y divide-[var(--gf-panel-border)]">
           {rows.map((r) => (
-            <div key={r.district} className="flex items-center justify-between px-4 py-3 hover:bg-[var(--surface-card)] transition-colors">
+            <div key={r.district} className="flex h-[52px] items-center justify-between px-3 hover:bg-white/[0.03]">
               <div className="min-w-0">
-                <div className="text-[13px] font-medium text-[var(--ink)]">{r.district}</div>
-                <div className="font-mono text-[11px] text-[var(--mute)]">
+                <div className="truncate text-[0.75rem] font-medium text-[var(--gf-text)]">
+                  {r.district}
+                </div>
+                <div className="font-mono text-[0.6rem] text-[var(--gf-text-muted)]">
                   {weatherCodeLabel(r.weathercode)} · {r.windspeed} km/h
                 </div>
               </div>
-              <span className="ml-3 font-mono text-[16px] font-bold text-[var(--ink)]">
-                {Math.round(r.temperature)}°
-              </span>
+              <div className="ml-3 shrink-0 font-mono text-[0.9rem] font-bold text-[var(--gf-accent)]">
+                {Math.round(r.temperature)}°C
+              </div>
             </div>
           ))}
         </div>
       )}
-    </GrafanaPanel>
+    </GrafanaMiniPanel>
   );
 }
 
 // ─── Air Quality ──────────────────────────────────────────────────────────────
 
 function AirQualityPanel() {
-  const [data, setData] = useState<AqiPayload | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-
-  const load = useCallback(async () => {
-    setRefreshing(true);
-    try {
+  const { data, isPending, refetch } = useQuery({
+    queryKey: ["panels", "aqi"],
+    queryFn: async () => {
       const res = await fetch(`/api/aqi?t=${Date.now()}`, { cache: "no-store" });
-      setData(await res.json());
-    } catch { /* keep */ } finally { setLoading(false); setRefreshing(false); }
-  }, []);
-
-  useEffect(() => { load(); }, [load]);
-  useEffect(() => {
-    const id = window.setInterval(load, 10 * 60 * 1000);
-    return () => window.clearInterval(id);
-  }, [load]);
+      if (!res.ok) throw new Error(String(res.status));
+      return res.json() as Promise<AqiPayload>;
+    },
+    placeholderData: keepPreviousData,
+    refetchInterval: 10 * 60 * 1000,
+  });
 
   return (
-    <GrafanaPanel 
-      title="Air Quality" 
-      id="aqi" 
-      className="scroll-mt-[140px]"
-      rightSlot={
-        <button
-          type="button"
-          onClick={load}
-          disabled={refreshing}
-          className="btn-secondary h-7 px-2.5 font-mono text-[10px] disabled:opacity-50"
-        >
-          {refreshing ? "⟳" : "↻"}
-        </button>
-      }
+    <GrafanaMiniPanel
+      title="Air Quality"
+      id="aqi"
+      actions={<PanelRefreshButton onClick={() => void refetch()} ariaLabel="Refresh air quality data" />}
     >
-      {loading ? <Spinner /> : (
-        <div className="divide-y divide-[var(--hairline-soft)]">
+      {isPending ? (
+        <Spinner />
+      ) : (
+        <div className="divide-y divide-[var(--gf-panel-border)]">
           {(data?.cities ?? []).map((c) => {
             const meta = aqiMeta(c.aqi_index);
             return (
-              <div key={c.district} className="flex items-center justify-between px-4 py-3 hover:bg-[var(--surface-card)] transition-colors">
+              <div key={c.district} className="flex h-[52px] items-center justify-between px-3 hover:bg-white/[0.03]">
                 <div className="min-w-0">
-                  <div className="text-[13px] font-medium text-[var(--ink)]">{c.district}</div>
+                  <div className="truncate text-[0.75rem] font-medium text-[var(--gf-text)]">
+                    {c.district}
+                  </div>
                   {c.pm2_5 !== null && (
-                    <div className="font-mono text-[11px] text-[var(--mute)]">PM2.5 {c.pm2_5.toFixed(1)} µg/m³</div>
+                    <div className="font-mono text-[0.6rem] text-[var(--gf-text-muted)]">
+                      PM2.5 {c.pm2_5.toFixed(1)} µg/m³
+                    </div>
                   )}
                 </div>
-                <div className="ml-3 flex items-center gap-2">
+                <div className="ml-3 flex shrink-0 items-center gap-2">
                   {c.aqi_index !== null && (
-                    <span className="font-mono text-[16px] font-bold" style={{ color: meta.color }}>{c.aqi_index}</span>
+                    <span className="font-mono text-[0.9rem] font-bold" style={{ color: meta.color }}>
+                      {c.aqi_index}
+                    </span>
                   )}
-                  <span className="w-14 text-right font-mono text-[11px] font-semibold" style={{ color: meta.color }}>{meta.label}</span>
+                  <span className="w-16 text-right font-mono text-[0.62rem] font-semibold" style={{ color: meta.color }}>
+                    {meta.label}
+                  </span>
                 </div>
               </div>
             );
           })}
         </div>
       )}
-    </GrafanaPanel>
+    </GrafanaMiniPanel>
   );
 }
 
-// ─── Earthquakes ──────────────────────────────────────────────────────────────
+// ─── Earthquakes (same API cache as seismic strip in GrafanaDataRow) ────────────
 
 function EarthquakesPanel() {
-  const [data, setData] = useState<QuakePayload | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const load = useCallback(async () => {
-    try {
+  const { data, isPending, refetch } = useQuery({
+    queryKey: ["panels", "earthquakes"],
+    queryFn: async () => {
       const res = await fetch(`/api/earthquakes?t=${Date.now()}`, { cache: "no-store" });
-      setData(await res.json());
-    } catch { /* keep */ } finally { setLoading(false); }
-  }, []);
+      if (!res.ok) throw new Error(String(res.status));
+      return res.json() as Promise<QuakePayload>;
+    },
+    placeholderData: keepPreviousData,
+    refetchInterval: 15 * 60 * 1000,
+  });
 
-  useEffect(() => { load(); }, [load]);
-  useEffect(() => {
-    const id = window.setInterval(load, 15 * 60 * 1000);
-    return () => window.clearInterval(id);
-  }, [load]);
+  const countBadge = data ? (
+    <span className="rounded-sm bg-[var(--gf-warn)]/20 px-1.5 py-0.5 font-mono text-[0.6rem] font-bold text-[var(--gf-warn)]">
+      {data.count}
+    </span>
+  ) : null;
 
   return (
-    <GrafanaPanel
-      title="Earthquakes"
-      rightSlot={data ? <span className="badge badge-count">{data.count}</span> : null}
-      id="earthquakes-detail"
-      className="scroll-mt-[140px]"
+    <GrafanaMiniPanel
+      title="Earthquakes & Disasters"
+      badge={countBadge}
+      id="earthquakes-dash"
+      actions={<PanelRefreshButton onClick={() => void refetch()} ariaLabel="Refresh earthquake feed" />}
     >
-      {loading ? <Spinner /> : !data?.quakes.length ? (
-        <div className="px-4 py-6 text-center font-mono text-[12px] text-[var(--mute)]">
-          No significant activity in last 30 days.
+      {isPending ? (
+        <Spinner />
+      ) : !data?.quakes.length ? (
+        <div className="px-3 py-4 text-center font-mono text-[0.72rem] text-[var(--gf-text-muted)]">
+          No significant activity in last 30 days
         </div>
       ) : (
-        <div className="divide-y divide-[var(--hairline-soft)]">
-          {data.quakes.slice(0, 20).map((q) => (
-            <a
-              key={q.id}
-              href={q.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-between px-4 py-2.5 no-underline hover:bg-[var(--surface-card)] transition-colors"
-              style={{ color: "inherit" }}
-            >
-              <div className="min-w-0 flex-1 pr-2">
-                <div className="truncate text-[13px] text-[var(--ink)]">{q.place}</div>
-                <div className="font-mono text-[11px] text-[var(--mute)]">
-                  {timeAgo(q.time)} · {q.depth.toFixed(0)} km deep
+        <div className="divide-y divide-[var(--gf-panel-border)]">
+          {data.quakes.slice(0, 20).map((q) => {
+            const color = magColor(q.magnitude);
+            return (
+              <a
+                key={q.id}
+                href={q.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between px-3 py-2 no-underline hover:bg-white/[0.03]"
+                style={{ color: "inherit" }}
+              >
+                <div className="min-w-0 flex-1 pr-2">
+                  <div className="truncate text-[0.72rem] text-[var(--gf-text)]">{q.place}</div>
+                  <div className="font-mono text-[0.6rem] text-[var(--gf-text-muted)]">
+                    {timeAgo(q.time)} · {q.depth.toFixed(0)} km deep
+                  </div>
                 </div>
-              </div>
-              <span className="shrink-0 font-mono text-[16px] font-bold" style={{ color: magColor(q.magnitude) }}>
-                M{q.magnitude.toFixed(1)}
-              </span>
-            </a>
-          ))}
+                <div className="shrink-0 font-mono text-[1rem] font-bold" style={{ color }}>
+                  M{q.magnitude.toFixed(1)}
+                </div>
+              </a>
+            );
+          })}
         </div>
       )}
-    </GrafanaPanel>
+    </GrafanaMiniPanel>
   );
 }
+
+// ─── Exported row ─────────────────────────────────────────────────────────────
 
 export function GrafanaDashRow() {
   return (
-    <>
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
       <CityWeatherPanel />
-    </>
+      <AirQualityPanel />
+      <EarthquakesPanel />
+    </div>
   );
-}
-
-export function AirQualitySection() {
-  return <AirQualityPanel />;
-}
-
-export function EarthquakesSection() {
-  return <EarthquakesPanel />;
 }

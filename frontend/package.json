@@ -12,6 +12,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.100.14",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.14.0",
     "next": "16.2.3",

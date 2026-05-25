@@ -1,15 +1,20 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import { Noto_Sans_Malayalam, Noto_Serif_Malayalam } from "next/font/google";
+import {
+  DM_Sans,
+  Noto_Sans_Malayalam,
+  Noto_Serif_Malayalam,
+  Playfair_Display,
+} from "next/font/google";
 import "./globals.css";
+import { QueryProviders } from "@/components/QueryProviders";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const playfair = Playfair_Display({
+  variable: "--font-playfair",
   subsets: ["latin"],
 });
 
@@ -26,11 +31,11 @@ const notoMlSans = Noto_Sans_Malayalam({
 });
 
 export const metadata: Metadata = {
-  title: "Kerala Monitor — God's Own Country Dashboard",
+  title: "Kerala Monitor",
   description:
-    "Real-time command center for Kerala: live news, weather, markets, air quality, seismic activity, fuel prices, festivals and more.",
+    "Live streams, Kerala map, fuel & gold, news, festivals and movies — God's Own Country dashboard.",
   icons: {
-    icon: "/favicon.svg",
+    icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥥</text></svg>",
   },
 };
 
@@ -42,9 +47,15 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${notoMlSerif.variable} ${notoMlSans.variable}`}
+      className={`${dmSans.variable} ${playfair.variable} ${notoMlSerif.variable} ${notoMlSans.variable} h-full antialiased`}
+      style={{ backgroundColor: "#0b0f14", color: "#d8dee9", colorScheme: "dark" }}
     >
-      <body className="min-h-dvh antialiased">{children}</body>
+      <body
+        className="min-h-full flex flex-col font-sans"
+        style={{ backgroundColor: "#0b0f14", color: "#d8dee9" }}
+      >
+        <QueryProviders>{children}</QueryProviders>
+      </body>
     </html>
   );
 }

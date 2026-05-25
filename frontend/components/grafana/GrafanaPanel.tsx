@@ -18,15 +18,21 @@ export function GrafanaPanel({
   contentClassName?: string;
 }) {
   return (
-    <section id={id} className={`pin-card ${className}`.trim()}>
-      <header className="pin-card-header flex items-center justify-between">
+    <section
+      id={id}
+      className={`gf-panel kt-animate-in ${className}`.trim()}
+    >
+      <header className="gf-panel-header">
+        <span className="gf-panel-accent-bar" aria-hidden />
         <div className="min-w-0 flex-1">
-          <h2 className="pin-card-title">{title}</h2>
-          {subtitle && <p className="pin-card-subtitle">{subtitle}</p>}
+          <h2 className="gf-panel-heading">{title}</h2>
+          {subtitle ? (
+            <p className="gf-panel-subheading">{subtitle}</p>
+          ) : null}
         </div>
-        {rightSlot && <div className="shrink-0 ml-3">{rightSlot}</div>}
+        {rightSlot ? <div className="shrink-0">{rightSlot}</div> : null}
       </header>
-      <div className={`pin-card-body ${contentClassName}`.trim()}>{children}</div>
+      <div className={`gf-panel-body ${contentClassName}`.trim()}>{children}</div>
     </section>
   );
 }
