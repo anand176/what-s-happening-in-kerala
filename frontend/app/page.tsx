@@ -12,6 +12,7 @@ import { NewsSection } from "@/components/NewsSection";
 import { StreamEmbeds } from "@/components/StreamEmbeds";
 import { GITHUB_REPO_URL } from "@/config/site";
 import { youtubeStreamEntries } from "@/config/sources";
+import { headers } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,17 @@ type Upcoming = {
   poster?: string;
 };
 
-function appBaseUrl(): string {
+/** Base URL for same-origin API fetches during SSR — prefer request Host so prod doesn’t rely on NEXT_PUBLIC_APP_URL matching the live domain. */
+async function internalApiBase(): Promise<string> {
+  const h = await headers();
+  const host = (
+    h.get("x-forwarded-host") ?? h.get("host") ?? ""
+  )
+    .split(",")[0]
+    ?.trim();
+  const proto =
+    (h.get("x-forwarded-proto") ?? "https").split(",")[0]?.trim() ?? "https";
+  if (host) return `${proto}://${host}`.replace(/\/$/, "");
   if (process.env.NEXT_PUBLIC_APP_URL) {
     return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "");
   }
@@ -34,7 +45,7 @@ function appBaseUrl(): string {
 }
 
 async function loadFestivalsAndMovies(): Promise<{ festivalItems: Upcoming[]; movieItems: Upcoming[] }> {
-  const base = appBaseUrl();
+  const base = await internalApiBase();
   let festivalItems: Upcoming[] = [];
   let movieItems: Upcoming[] = [];
 
@@ -126,9 +137,14 @@ export default async function Home() {
         >
           {festivalItems.length === 0 ? (
             <p className="text-[0.85rem] text-[var(--gf-text-muted)]">
-              No upcoming festivals from the calendar API yet. Configure keys in{" "}
-              <code className="font-mono text-[var(--gf-accent)]">.env</code> or check{" "}
-              <code className="font-mono text-[var(--gf-accent)]">/api/festivals</code>.
+              No upcoming festivals loaded. Optional: set{" "}
+              <code className="font-mono text-[var(--gf-accent)]">CALENDARIFIC_API_KEY</code> in{" "}
+              Vercel → Env (Production) for richer Kerala data — otherwise the API uses free fallbacks. If this
+              stays empty after a{" "}
+              <strong className="text-[var(--gf-text-muted)]">redeploy</strong>, open{" "}
+              <code className="font-mono text-[var(--gf-accent)]">/api/festivals</code> (only set{" "}
+              <code className="font-mono text-[var(--gf-accent)]">NEXT_PUBLIC_APP_URL</code> to your public
+              URL if redirects / self-fetch cause issues — the app prefers the incoming request Host).
             </p>
           ) : (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
@@ -193,10 +209,12 @@ export default async function Home() {
         >
           {movieItems.length === 0 ? (
             <p className="text-[0.85rem] text-[var(--gf-text-muted)]">
-              No Malayalam listings from Watchmode yet. Set{" "}
+              No Malayalam listings from Watchmode. Add{" "}
               <code className="font-mono text-[var(--gf-accent)]">WATCHMODE_API_KEY</code> in{" "}
-              <code className="font-mono text-[var(--gf-accent)]">.env</code> or open{" "}
-              <code className="font-mono text-[var(--gf-accent)]">/api/movies</code>.
+              Vercel → Env (Production) for Serverless Functions,{" "}
+              <strong className="text-[var(--gf-text-muted)]">save</strong>, then{" "}
+              <strong className="text-[var(--gf-text-muted)]">Redeploy</strong>. Inspect{" "}
+              <code className="font-mono text-[var(--gf-accent)]">/api/movies</code> for JSON.
             </p>
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
