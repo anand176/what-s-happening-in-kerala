@@ -4,7 +4,7 @@ import { youtubeVideoIdFromUrl } from "@/lib/youtube";
 export const youtubeChannels = [
   { name: "Asianet News",      url: "https://www.youtube.com/watch?v=s0LLVQeMmtU" },
   { name: "Manorama News",     url: "https://www.youtube.com/watch?v=tgBTspqA5nY" },
-  { name: "Mathrubhumi News",  url: "https://www.youtube.com/watch?v=0wGPLjeOOA" },
+  { name: "Mathrubhumi News",  url: "https://www.youtube.com/watch?v=0wGkPLjeOOA" },
   { name: "24 News Malayalam", url: "https://www.youtube.com/watch?v=1wECsnGZcfc" },
   { name: "Reporter TV",       url: "https://www.youtube.com/watch?v=nObUcHKZEGY" },
   { name: "Big TV",            url: "https://www.youtube.com/watch?v=HRvY9DoJ_qI" },
