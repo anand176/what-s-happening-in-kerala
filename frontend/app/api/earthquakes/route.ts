@@ -34,8 +34,9 @@ export async function GET() {
   const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const startTime = startDate.toISOString().split("T")[0];
 
+  const apiBase = process.env.USGS_EARTHQUAKES_BASE || "https://earthquake.usgs.gov/fdsnws/event/1/query";
   const url =
-    `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson` +
+    `${apiBase}?format=geojson` +
     `&starttime=${startTime}&endtime=${endTime}` +
     `&minlatitude=${BBOX.minLat}&maxlatitude=${BBOX.maxLat}` +
     `&minlongitude=${BBOX.minLon}&maxlongitude=${BBOX.maxLon}` +

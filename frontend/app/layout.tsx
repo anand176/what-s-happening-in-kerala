@@ -1,19 +1,15 @@
 import type { Metadata } from "next";
-import {
-  DM_Sans,
-  Noto_Sans_Malayalam,
-  Noto_Serif_Malayalam,
-  Playfair_Display,
-} from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
+import { Noto_Sans_Malayalam, Noto_Serif_Malayalam } from "next/font/google";
 import "./globals.css";
 
-const dmSans = DM_Sans({
-  variable: "--font-dm-sans",
+const geistSans = Geist({
+  variable: "--font-geist-sans",
   subsets: ["latin"],
 });
 
-const playfair = Playfair_Display({
-  variable: "--font-playfair",
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
   subsets: ["latin"],
 });
 
@@ -30,11 +26,11 @@ const notoMlSans = Noto_Sans_Malayalam({
 });
 
 export const metadata: Metadata = {
-  title: "Kerala Monitor",
+  title: "Kerala Monitor — God's Own Country Dashboard",
   description:
-    "Live streams, Kerala map, fuel & gold, news, festivals and movies — God's Own Country dashboard.",
+    "Real-time command center for Kerala: live news, weather, markets, air quality, seismic activity, fuel prices, festivals and more.",
   icons: {
-    icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥥</text></svg>",
+    icon: "/favicon.svg",
   },
 };
 
@@ -46,9 +42,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${dmSans.variable} ${playfair.variable} ${notoMlSerif.variable} ${notoMlSans.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${notoMlSerif.variable} ${notoMlSans.variable}`}
     >
-      <body className="min-h-full flex flex-col font-sans">{children}</body>
+      <body className="min-h-dvh antialiased">{children}</body>
     </html>
   );
 }

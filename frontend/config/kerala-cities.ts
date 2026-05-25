@@ -93,5 +93,6 @@ const TIMEZONE = "Asia/Kolkata";
 export function openMeteoMultiCityUrl(): string {
   const lat = keralaMainCities.map((c) => c.lat).join(",");
   const lon = keralaMainCities.map((c) => c.lon).join(",");
-  return `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&timezone=${encodeURIComponent(TIMEZONE)}`;
+  const baseUrl = process.env.NEXT_PUBLIC_OPEN_METEO_BASE || "https://api.open-meteo.com/v1/forecast";
+  return `${baseUrl}?latitude=${lat}&longitude=${lon}&current_weather=true&timezone=${encodeURIComponent(TIMEZONE)}`;
 }

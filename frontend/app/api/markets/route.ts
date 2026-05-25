@@ -35,8 +35,9 @@ const HEADERS = {
 async function fetchQuote(symbol: string): Promise<YahooQuote | null> {
   // v7/finance/quote returns explicit regularMarketChange + regularMarketChangePercent
   const encoded = encodeURIComponent(symbol);
+  const apiBase = process.env.YAHOO_FINANCE_BASE || "https://query1.finance.yahoo.com";
   const url =
-    `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encoded}` +
+    `${apiBase}/v7/finance/quote?symbols=${encoded}` +
     `&fields=regularMarketPrice,regularMarketChange,regularMarketChangePercent,regularMarketPreviousClose,marketState`;
 
   try {
@@ -60,7 +61,8 @@ async function fetchQuote(symbol: string): Promise<YahooQuote | null> {
 
 async function fetchQuoteChart(symbol: string): Promise<YahooQuote | null> {
   const encoded = encodeURIComponent(symbol);
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encoded}?interval=1d&range=5d`;
+  const apiBase = process.env.YAHOO_FINANCE_BASE || "https://query1.finance.yahoo.com";
+  const url = `${apiBase}/v8/finance/chart/${encoded}?interval=1d&range=5d`;
   try {
     const res = await fetch(url, { headers: HEADERS, next: { revalidate: 0 } });
     if (!res.ok) return null;

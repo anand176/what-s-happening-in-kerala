@@ -22,8 +22,8 @@ export type ForexPayload = {
 };
 
 export async function GET() {
-  // open.er-api.com free tier — no key needed, 1500 req/month
-  const url = "https://open.er-api.com/v6/latest/INR";
+  const apiBase = process.env.FOREX_API_BASE || "https://open.er-api.com/v6/latest/INR";
+  const url = `${apiBase}`;
 
   try {
     const res = await fetch(url, { next: { revalidate: 0 } });
