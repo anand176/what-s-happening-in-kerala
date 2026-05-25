@@ -20,8 +20,9 @@ export type AqiPayload = {
 export async function GET() {
   const lat = keralaMainCities.map((c) => c.lat).join(",");
   const lon = keralaMainCities.map((c) => c.lon).join(",");
+  const apiBase = process.env.AQI_API_BASE || "https://air-quality-api.open-meteo.com/v1/air-quality";
   const url =
-    `https://air-quality-api.open-meteo.com/v1/air-quality` +
+    `${apiBase}` +
     `?latitude=${lat}&longitude=${lon}` +
     `&current=pm2_5,pm10,european_aqi` +
     `&timezone=Asia%2FKolkata`;

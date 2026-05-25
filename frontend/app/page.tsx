@@ -1,235 +1,131 @@
-import { AlertBanner } from "@/components/chrome/AlertBanner";
-import { MainNav } from "@/components/chrome/MainNav";
-import { SiteHeader } from "@/components/chrome/SiteHeader";
-import { GrafanaPanel } from "@/components/grafana/GrafanaPanel";
-import { GrafanaDashRow } from "@/components/GrafanaDashRow";
-import { GrafanaDataRow } from "@/components/GrafanaDataRow";
+import { Navbar } from "@/components/chrome/Navbar";
+import { GrafanaDashRow, AirQualitySection, EarthquakesSection } from "@/components/GrafanaDashRow";
+import { GrafanaDataRow, ExchangeRatesSection } from "@/components/GrafanaDataRow";
 import { KeralaMapWeatherLoader } from "@/components/KeralaMapWeatherLoader";
 import { NewsSection } from "@/components/NewsSection";
 import { StreamEmbeds } from "@/components/StreamEmbeds";
+import { FestivalsSection } from "@/components/FestivalsSection";
+import { MoviesSection } from "@/components/MoviesSection";
 import { GITHUB_REPO_URL } from "@/config/site";
 import { youtubeStreamEntries } from "@/config/sources";
-import festivals from "@/data/festivals.json";
-import movies from "@/data/movies.json";
-
-type Upcoming = {
-  title: string;
-  date: string;
-  note?: string;
-  link?: string;
-  poster?: string;
-};
-
-function formatMovieDateLine(raw: string): string {
-  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
-    const d = new Date(`${raw}T12:00:00`);
-    if (!Number.isNaN(d.getTime())) {
-      return d.toLocaleDateString("en-IN", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      });
-    }
-  }
-  return raw;
-}
-
-// Accent colours cycling per card
-const FEST_ACCENTS = [
-  "#f05a28", // orange
-  "#3fb950", // green
-  "#f5a623", // gold
-  "#7c6af7", // purple
-  "#e24d4d", // red
-  "#29b6f6", // blue
-];
-function daysUntilLabel(dateStr: string): string | null {
-  const diff = Math.ceil(
-    (new Date(dateStr).getTime() - Date.now()) / 86400000,
-  );
-  if (diff < 0) return null;
-  if (diff === 0) return "Today!";
-  if (diff === 1) return "Tomorrow!";
-  return `${diff} days away`;
-}
 
 export default function Home() {
-  const festivalItems = festivals as Upcoming[];
-  const movieItems = movies as Upcoming[];
-
-  const mlFest =
-    "\u0D35\u0D30\u0D3E\u0D28\u0D3F\u0D30\u0D3F\u0D15\u0D4D\u0D15\u0D41\u0D28\u0D4D\u0D28 \u0D06\u0D18\u0D4B\u0D37\u0D19\u0D4D\u0D19\u0D7E";
-  const mlMovies =
-    "\u0D2E\u0D32\u0D2F\u0D3E\u0D33\u0D02 \u0D38\u0D3F\u0D28\u0D3F\u0D2E";
-
   return (
-    <div className="min-h-full bg-[var(--gf-page)]">
-      <div className="gf-top-stripe" aria-hidden />
-      <SiteHeader />
-      <AlertBanner />
-      <MainNav />
+    <div className="relative min-h-dvh">
+      <div className="hero-mesh" aria-hidden />
+      <div className="relative z-10">
+        <Navbar />
 
-      <main className="mx-auto max-w-7xl space-y-5 px-3 py-5 md:px-5">
-        <KeralaMapWeatherLoader />
-
-        <StreamEmbeds entries={youtubeStreamEntries} />
-
-        <GrafanaDataRow />
-
-        <GrafanaDashRow />
-
-        <NewsSection />
-
-        <GrafanaPanel
-          id="festivals"
-          title="Upcoming festivals"
-          subtitle={mlFest}
-          className="kt-animate-in kt-stagger-4 scroll-mt-[120px]"
-        >
-          {festivalItems.length === 0 ? (
-            <p className="text-[0.85rem] text-[var(--gf-text-muted)]">
-              Add entries in data/festivals.json.
-            </p>
-          ) : (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
-              {festivalItems
-                .filter((item) => daysUntilLabel(item.date) !== null)
-                .map((item) => {
-                  const countdown = daysUntilLabel(item.date)!;
-                  const d = new Date(`${item.date}T12:00:00`);
-                  const dateLabel = d.toLocaleDateString("en-IN", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  });
-                  const weekdayLabel = d.toLocaleDateString("en-IN", { weekday: "long" });
-                  return (
-                    <div
-                      key={`${item.title}-${item.date}`}
-                      className="kt-card-hover gf-subpanel relative flex items-stretch overflow-hidden"
-                    >
-                      {/* Content */}
-                      <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 px-3 py-3">
-                        <div className="text-[0.88rem] font-semibold leading-snug text-[var(--gf-text)]">
-                          {item.title}
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span
-                            className="font-mono text-[0.62rem] font-semibold text-[var(--gf-text-muted)]"
-                          >
-                            {dateLabel}
-                          </span>
-                          <span className="font-mono text-[0.6rem] capitalize text-[var(--gf-text-muted)]">
-                            {weekdayLabel}
-                          </span>
-                        </div>
-                      </div>
-                      {/* Countdown badge */}
-                      <div className="flex shrink-0 items-center pr-3">
-                        <span
-                          className="rounded-sm px-2 py-1 text-center font-mono text-[0.6rem] font-bold leading-tight border border-[var(--gf-panel-border)] bg-[var(--gf-panel-inner)] text-[var(--gf-text-muted)]"
-                        >
-                          {countdown === "Today!" || countdown === "Tomorrow!" ? (
-                            countdown
-                          ) : (
-                            <>
-                              <span className="block text-[0.72rem]">{countdown.replace(" days away", "")}</span>
-                              <span className="block opacity-70">days</span>
-                            </>
-                          )}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
+        <main className="mx-auto max-w-[1400px] px-3 py-4 md:px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {/* Left section */}
+            <div className="space-y-3">
+              <KeralaMapWeatherLoader />
+              <GrafanaDataRow />
+              <GrafanaDashRow />
+              <ExchangeRatesSection />
+              <FestivalsSection />
             </div>
-          )}
-        </GrafanaPanel>
 
-        <GrafanaPanel
-          id="movies"
-          title="Malayalam movies"
-          subtitle={mlMovies}
-          className="kt-animate-in kt-stagger-5 scroll-mt-[120px]"
-        >
-          {movieItems.length === 0 ? (
-            <p className="text-[0.85rem] text-[var(--gf-text-muted)]">
-              Add entries in data/movies.json.
-            </p>
-          ) : (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-              {movieItems.map((item, i) => (
-                <div
-                  key={`${item.title}-${item.date}-${i}`}
-                  className="kt-card-hover gf-subpanel cursor-default overflow-hidden"
-                >
-                  <div className="relative aspect-[2/3] overflow-hidden border-b border-[var(--gf-panel-border)] bg-[var(--gf-panel-inner)]">
-                    {item.poster ? (
-                      <img
-                        src={item.poster}
-                        alt={item.title}
-                        className="h-full w-full object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-4xl">
-                        {
-                          ["\u{1F3AC}", "\u{1F39E}\uFE0F", "\u{1F3AD}", "\u{1F3DE}\uFE0F"][
-                            i % 4
-                          ]
-                        }
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-2">
-                    <div className="line-clamp-2 text-[0.78rem] text-[var(--gf-text)]">
-                      {item.title}
-                    </div>
-                    <div className="mt-1 font-mono text-[0.62rem] text-[var(--gf-text-muted)]">
-                      {formatMovieDateLine(item.date)}
-                    </div>
-                    {item.note ? (
-                      <div className="mt-0.5 text-[0.58rem] leading-snug text-[var(--gf-text-muted)] opacity-90">
-                        {item.note}
-                      </div>
-                    ) : null}
-                    <span className="mt-1 inline-block rounded-sm border border-[var(--gf-live)]/40 bg-[rgba(63,185,80,0.12)] px-1.5 py-0.5 font-mono text-[0.55rem] font-bold text-[var(--gf-live)]">
-                      Showtime
-                    </span>
+            {/* Right section */}
+            <div className="space-y-3">
+              <StreamEmbeds entries={youtubeStreamEntries} />
+              <AirQualitySection />
+              <EarthquakesSection />
+              <NewsSection />
+              <MoviesSection />
+            </div>
+          </div>
+        </main>
+
+        <footer className="border-t border-[var(--hairline-soft)] bg-[var(--canvas)] mt-6">
+          <div className="mx-auto max-w-[1400px] px-3 py-8 md:px-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Brand */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <img src="/logo.svg" alt="Kerala Monitor Logo" className="h-8 w-8 object-contain" />
+                  <div>
+                    <h3 className="text-[14px] font-bold text-[var(--ink)]">Kerala Monitor</h3>
+                    <p className="font-ml-sans text-[9px] text-[var(--mute)]">
+                      God&apos;s Own Country
+                    </p>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </GrafanaPanel>
-      </main>
+                <p className="text-[11px] text-[var(--mute)] leading-relaxed">
+                  Real-time command center for Kerala: live news, weather, markets, air quality, and more.
+                </p>
+              </div>
 
-      <footer className="mt-8 border-t border-[var(--gf-panel-border)] bg-[var(--gf-header-bar)] px-4 py-6 text-center font-mono text-[0.68rem] text-[var(--gf-text-muted)]">
-        <span className="font-ml-serif mb-1 block text-[0.82rem] text-[var(--gf-accent)]">
-          {"\u0D15\u0D47\u0D30\u0D33\u0D02 \u00B7 \u0D26\u0D48\u0D35\u0D24\u0D4D\u0D24\u0D3F\u0D28\u0D4D\u0D31\u0D46 \u0D38\u0D4D\u0D35\u0D28\u0D4D\u0D24\u0D02 \u0D28\u0D3E\u0D1F\u0D4D"}
-        </span>
-        Kerala Monitor — telemetry for God&apos;s Own Country
-        <br />
-        <span className="opacity-90">Kerala Monitor · God&apos;s Own Country</span>
-        <div className="mt-5 flex justify-center">
-          <a
-            href={GITHUB_REPO_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group inline-flex items-center gap-2 rounded-md border border-[var(--gf-panel-border)] bg-[var(--gf-panel-inner)] px-4 py-2.5 font-mono text-[0.68rem] font-semibold tracking-wide text-[var(--gf-text)] uppercase shadow-[inset_0_0_0_1px_rgba(240,90,40,0.12)] transition-[color,background-color,border-color,box-shadow] hover:border-[var(--gf-accent)]/45 hover:bg-[var(--gf-accent-soft)] hover:text-[var(--gf-accent)]"
-          >
-            <svg
-              className="size-4 shrink-0 opacity-90 group-hover:opacity-100"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              aria-hidden
-            >
-              <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.113.825-.262.825-.585 0-.292-.015-1.263-.015-2.295-3.015.653-3.653-.735-3.885-1.403-.131-.33-.698-1.403-1.188-1.688-.405-.218-.99-.756-.015-.771.918-.014 1.575.844 1.791 1.188 1.05 1.744 2.73 1.253 3.39.948.098-.746.405-1.253.735-1.543-2.565-.293-5.265-1.283-5.265-5.698 0-1.26.45-2.288 1.185-3.096-.12-.293-.51-1.47.113-3.065 0 0 .968-.307 3.17 1.178a10.95 10.95 0 0 1 5.7 0c2.202-1.485 3.165-1.178 3.165-1.178.627 1.595.233 2.772.118 3.065.735.808 1.18 1.83 1.18 3.096 0 4.425-2.708 5.398-5.28 5.688.42.36.795 1.065.795 2.145 0 1.548-.015 2.79-.015 3.165 0 .323.225.708.825.585A11.987 11.987 0 0 0 24 12c0-6.63-5.37-12-12-12Z" />
-            </svg>
-            <span>Star on GitHub</span>
-          </a>
-        </div>
-      </footer>
+              {/* Quick Links */}
+              <div>
+                <h4 className="text-[12px] font-bold text-[var(--ink)] mb-3 uppercase tracking-wide">Quick Links</h4>
+                <ul className="space-y-2">
+                  <li><a href="#districts" className="text-[11px] text-[var(--mute)] hover:text-[var(--primary)] transition-colors">Districts</a></li>
+                  <li><a href="#live-news" className="text-[11px] text-[var(--mute)] hover:text-[var(--primary)] transition-colors">Live News</a></li>
+                  <li><a href="#markets" className="text-[11px] text-[var(--mute)] hover:text-[var(--primary)] transition-colors">Markets</a></li>
+                  <li><a href="#latest-news" className="text-[11px] text-[var(--mute)] hover:text-[var(--primary)] transition-colors">Headlines</a></li>
+                </ul>
+              </div>
+
+              {/* Top Contributors */}
+              <div>
+                <h4 className="text-[12px] font-bold text-[var(--ink)] mb-3 uppercase tracking-wide">Top Contributors</h4>
+                <div className="flex flex-col gap-2">
+                  <a
+                    href="https://github.com/anand176"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group flex items-center gap-2.5 rounded-md border border-[var(--hairline-soft)] bg-[var(--surface-soft)] p-2 hover:bg-[var(--surface-card)] transition-all max-w-[200px]"
+                  >
+                    <img
+                      src="https://github.com/anand176.png?size=64"
+                      alt="Anand Harikrishnan"
+                      className="h-8 w-8 rounded-full object-cover border border-[var(--hairline-soft)]"
+                    />
+                    <div className="min-w-0">
+                      <div className="text-[11px] font-bold text-[var(--ink)] truncate group-hover:text-[var(--primary)] transition-colors">
+                        Anand Harikrishnan
+                      </div>
+                      <div className="text-[9px] text-[var(--mute)] font-mono">
+                        @anand176
+                      </div>
+                    </div>
+                  </a>
+                </div>
+              </div>
+
+              {/* Connect */}
+              <div>
+                <h4 className="text-[12px] font-bold text-[var(--ink)] mb-3 uppercase tracking-wide">Connect</h4>
+                <div className="flex gap-2">
+                  <a
+                    href={GITHUB_REPO_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--hairline-soft)] text-[var(--ink)] hover:bg-[var(--ink)] hover:text-[var(--canvas)] transition-all"
+                    title="GitHub"
+                  >
+                    <svg className="size-4" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.113.825-.262.825-.585 0-.292-.015-1.263-.015-2.295-3.015.653-3.653-.735-3.885-1.403-.131-.33-.698-1.403-1.188-1.688-.405-.218-.99-.756-.015-.771.918-.014 1.575.844 1.791 1.188 1.05 1.744 2.73 1.253 3.39.948.098-.746.405-1.253.735-1.543-2.565-.293-5.265-1.283-5.265-5.698 0-1.26.45-2.288 1.185-3.096-.12-.293-.51-1.47.113-3.065 0 0 .968-.307 3.17 1.178a10.95 10.95 0 0 1 5.7 0c2.202-1.485 3.165-1.178 3.165-1.178.627 1.595.233 2.772.118 3.065.735.808 1.18 1.83 1.18 3.096 0 4.425-2.708 5.398-5.28 5.688.42.36.795 1.065.795 2.145 0 1.548-.015 2.79-.015 3.165 0 .323.225.708.825.585A11.987 11.987 0 0 0 24 12c0-6.63-5.37-12-12-12Z" />
+                    </svg>
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom bar */}
+            <div className="mt-6 pt-4 border-t border-[var(--hairline-soft)] flex flex-col md:flex-row justify-between items-center gap-2">
+              <p className="text-[10px] text-[var(--mute)]">
+                © {new Date().getFullYear()} Kerala Monitor. Built with Next.js & React.
+              </p>
+              <p className="text-[10px] text-[var(--mute)]">
+                Data from Open-Meteo, USGS, Yahoo Finance & RSS feeds
+              </p>
+            </div>
+          </div>
+        </footer>
+      </div>
     </div>
   );
 }
