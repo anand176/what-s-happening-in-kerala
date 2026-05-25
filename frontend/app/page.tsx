@@ -1,8 +1,8 @@
 import { AlertBanner } from "@/components/chrome/AlertBanner";
 import { MainNav } from "@/components/chrome/MainNav";
 import { SiteHeader } from "@/components/chrome/SiteHeader";
-import type { FestivalsPayload } from "@/app/api/festivals/route";
-import type { MoviesPayload } from "@/app/api/movies/route";
+import { getFestivalsPayload } from "@/lib/server/festivals-data";
+import { getMoviesPayload } from "@/lib/server/movies-data";
 import { GrafanaPanel } from "@/components/grafana/GrafanaPanel";
 import { RouterRefreshButton } from "@/components/grafana/RouterRefreshButton";
 import { GrafanaDashRow } from "@/components/GrafanaDashRow";
@@ -12,7 +12,6 @@ import { NewsSection } from "@/components/NewsSection";
 import { StreamEmbeds } from "@/components/StreamEmbeds";
 import { GITHUB_REPO_URL } from "@/config/site";
 import { youtubeStreamEntries } from "@/config/sources";
-import { headers } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
@@ -24,58 +23,21 @@ type Upcoming = {
   poster?: string;
 };
 
-/** Base URL for same-origin API fetches during SSR — prefer request Host so prod doesn’t rely on NEXT_PUBLIC_APP_URL matching the live domain. */
-async function internalApiBase(): Promise<string> {
-  const h = await headers();
-  const host = (
-    h.get("x-forwarded-host") ?? h.get("host") ?? ""
-  )
-    .split(",")[0]
-    ?.trim();
-  const proto =
-    (h.get("x-forwarded-proto") ?? "https").split(",")[0]?.trim() ?? "https";
-  if (host) return `${proto}://${host}`.replace(/\/$/, "");
-  if (process.env.NEXT_PUBLIC_APP_URL) {
-    return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "");
-  }
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
-  }
-  return "http://127.0.0.1:3000";
-}
-
 async function loadFestivalsAndMovies(): Promise<{ festivalItems: Upcoming[]; movieItems: Upcoming[] }> {
-  const base = await internalApiBase();
-  let festivalItems: Upcoming[] = [];
-  let movieItems: Upcoming[] = [];
+  const [fest, movies] = await Promise.all([getFestivalsPayload(), getMoviesPayload()]);
 
-  try {
-    const [festRes, movieRes] = await Promise.all([
-      fetch(`${base}/api/festivals`, { cache: "no-store" }),
-      fetch(`${base}/api/movies`, { cache: "no-store" }),
-    ]);
+  const festivalItems: Upcoming[] = (fest.items ?? []).map((i) => ({
+    title: i.title,
+    date: String(i.date ?? "").slice(0, 10),
+    note: i.note || undefined,
+  }));
 
-    if (festRes.ok) {
-      const j = (await festRes.json()) as FestivalsPayload;
-      festivalItems = (j.items ?? []).map((i) => ({
-        title: i.title,
-        date: i.date.slice(0, 10),
-        note: i.note || undefined,
-      }));
-    }
-
-    if (movieRes.ok) {
-      const j = (await movieRes.json()) as MoviesPayload;
-      movieItems = (j.items ?? []).map((i) => ({
-        title: i.title,
-        date: i.date.slice(0, 10),
-        note: i.note || undefined,
-        poster: i.poster ?? undefined,
-      }));
-    }
-  } catch {
-    /* keep empty arrays */
-  }
+  const movieItems: Upcoming[] = (movies.items ?? []).map((i) => ({
+    title: i.title,
+    date: String(i.date ?? "").slice(0, 10),
+    note: i.note || undefined,
+    poster: i.poster ?? undefined,
+  }));
 
   return { festivalItems, movieItems };
 }
