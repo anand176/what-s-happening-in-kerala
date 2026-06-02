@@ -6,6 +6,7 @@ import L from "leaflet";
 import type { StyleFunction } from "leaflet";
 import type { Feature, FeatureCollection, GeoJsonObject } from "geojson";
 import { GrafanaPanel } from "@/components/grafana/GrafanaPanel";
+import { PanelRefreshButton } from "@/components/grafana/PanelRefreshButton";
 import { keralaMainCities, openMeteoMultiCityUrl } from "@/config/kerala-cities";
 import { weatherCodeLabel } from "@/lib/weather";
 import type { AqiPayload } from "@/app/api/aqi/route";
@@ -89,32 +90,39 @@ export function KeralaMapWeather() {
   const [wikiDistrict, setWikiDistrict] = useState<string>("");
 
   // ── GeoJSON ──
-  useEffect(() => {
-    fetch("/kerala.geojson")
-      .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
-      .then((j: FeatureCollection) => setGeo(j))
-      .catch(() => { setGeo(null); setGeoErr(true); });
+  const loadGeo = useCallback(async () => {
+    setGeoErr(false);
+    try {
+      const r = await fetch(`/kerala.geojson?t=${Date.now()}`, { cache: "no-store" });
+      if (!r.ok) throw new Error(String(r.status));
+      const j = (await r.json()) as FeatureCollection;
+      setGeo(j);
+    } catch {
+      setGeo(null);
+      setGeoErr(true);
+    }
   }, []);
 
-  // ── Weather ──
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch(openMeteoMultiCityUrl());
-        if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-        const json = (await res.json()) as ForecastBlock[] | ForecastBlock;
-        const list = Array.isArray(json) ? json : [json];
-        if (!cancelled) { setForecasts(list); setWeatherErr(null); }
-      } catch (e) {
-        if (!cancelled) {
-          setForecasts(null);
-          setWeatherErr(e instanceof Error ? e.message : "Weather request failed");
-        }
-      }
-    })();
-    return () => { cancelled = true; };
+    loadGeo().catch(() => {});
+  }, [loadGeo]);
+  const loadWeather = useCallback(async () => {
+    try {
+      const res = await fetch(openMeteoMultiCityUrl(), { cache: "no-store" });
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      const json = (await res.json()) as ForecastBlock[] | ForecastBlock;
+      const list = Array.isArray(json) ? json : [json];
+      setForecasts(list);
+      setWeatherErr(null);
+    } catch (e) {
+      setForecasts(null);
+      setWeatherErr(e instanceof Error ? e.message : "Weather request failed");
+    }
   }, []);
+
+  useEffect(() => {
+    loadWeather().catch(() => {});
+  }, [loadWeather]);
 
   // ── AQI (all districts, refresh every 10 min) ──
   const loadAqi = useCallback(async () => {
@@ -125,11 +133,17 @@ export function KeralaMapWeather() {
     } catch { /* keep previous */ }
   }, []);
 
-  useEffect(() => { loadAqi(); }, [loadAqi]);
   useEffect(() => {
-    const id = window.setInterval(loadAqi, 10 * 60 * 1000);
+    loadAqi().catch(() => {});
+  }, [loadAqi]);
+  useEffect(() => {
+    const id = window.setInterval(() => { void loadAqi(); }, 10 * 60 * 1000);
     return () => window.clearInterval(id);
   }, [loadAqi]);
+
+  const reloadDashboard = useCallback(() => {
+    void Promise.all([loadGeo(), loadWeather(), loadAqi()]);
+  }, [loadGeo, loadWeather, loadAqi]);
 
   // ── Wikipedia (per selected district) ──
   useEffect(() => {
@@ -185,9 +199,15 @@ export function KeralaMapWeather() {
       subtitle={mlMapSub}
       className="kt-animate-in scroll-mt-[120px]"
       rightSlot={
-        <span className="font-mono text-[10px] font-semibold tracking-wider text-[var(--gf-text-muted)]">
-          WX / AQI / GEO
-        </span>
+        <div className="flex shrink-0 items-center gap-2">
+          <PanelRefreshButton
+            onClick={reloadDashboard}
+            ariaLabel="Refresh map, district weather, and air quality data"
+          />
+          <span className="font-mono text-[10px] font-semibold tracking-wider text-[var(--gf-text-muted)]">
+            WX / AQI / GEO
+          </span>
+        </div>
       }
     >
       <p className="mb-4 text-[0.8rem] text-[var(--gf-text-muted)]">
@@ -340,9 +360,11 @@ export function KeralaMapWeather() {
                     </div>
                   </dl>
                 </div>
-              ) : (
+              ) : !forecasts?.length && !weatherErr ? (
                 <p className="text-[0.8rem] text-[var(--gf-text-muted)]">Weather loading…</p>
-              )}
+              ) : !forecasts?.length && weatherErr ? (
+                <p className="text-[0.8rem] text-[var(--gf-warn)]">{weatherErr}</p>
+              ) : null}
 
               {/* AQI */}
               {detailAqi ? (
@@ -381,9 +403,9 @@ export function KeralaMapWeather() {
                     );
                   })()}
                 </div>
-              ) : (
+              ) : !aqiData ? (
                 <p className="text-[0.75rem] text-[var(--gf-text-muted)]">AQI loading…</p>
-              )}
+              ) : null}
 
               <p className="font-mono text-[0.6rem] text-[var(--gf-text-muted)]">
                 Last updated: {detail?.weather?.time ?? "—"}

@@ -37,17 +37,27 @@
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-dm-sans);
-  --font-display: var(--font-playfair);
-  --font-ml-serif: var(--font-noto-ml-serif);
-  --font-ml-sans: var(--font-noto-ml-sans);
+  /* Tie Tailwind semantics to Grafana tokens (helps v4 preset + tooling) */
+  --color-background: var(--gf-page);
+  --color-foreground: var(--gf-text);
+  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-playfair), ui-serif, Georgia, serif;
+  --font-ml-serif: var(--font-noto-ml-serif), "Noto Serif Malayalam", serif;
+  --font-ml-sans: var(--font-noto-ml-sans), "Noto Sans Malayalam", sans-serif;
+}
+
+/*
+ * Hard-set the page shell here (literal colors). Tailwind v4’s layered base can reorder
+ * unlayered rules in dev so variables alone sometimes paint a near-white canvas in Chrome.
+ */
+html {
+  color-scheme: dark;
+  background-color: #0b0f14;
 }
 
 body {
-  background: var(--gf-page);
-  color: var(--gf-text);
+  background-color: #0b0f14;
+  color: #d8dee9;
   overflow-x: hidden;
 }
 

@@ -1,36 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import type { ForexPayload } from "@/app/api/forex/route";
 import type { MarketsPayload } from "@/app/api/markets/route";
 import type { QuakePayload } from "@/app/api/earthquakes/route";
 import type { RetailRatesPayload } from "@/lib/retail-rates";
-
-// ─── shared mini-panel shell ──────────────────────────────────────────────────
-
-function MiniPanel({
-  title,
-  badge,
-  id,
-  children,
-}: {
-  title: string;
-  badge?: React.ReactNode;
-  id?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div id={id} className="gf-panel flex min-w-0 flex-1 flex-col scroll-mt-[120px]">
-      <div className="flex items-center gap-2 border-b border-[var(--gf-panel-border)] bg-black/20 px-3 py-2">
-        <span className="flex-1 font-mono text-[0.68rem] font-semibold tracking-widest text-[var(--gf-text)] uppercase">
-          {title}
-        </span>
-        {badge}
-      </div>
-      <div className="flex-1 overflow-y-auto">{children}</div>
-    </div>
-  );
-}
+import { GrafanaMiniPanel } from "@/components/grafana/GrafanaMiniPanel";
+import { PanelRefreshButton } from "@/components/grafana/PanelRefreshButton";
 
 function Spinner() {
   return (
@@ -53,25 +29,26 @@ const CURRENCY_META: Record<string, { label: string; country: string }> = {
 };
 
 function ExchangeRatesPanel() {
-  const [data, setData] = useState<ForexPayload | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const load = useCallback(async () => {
-    try {
+  const { data, isPending, refetch } = useQuery({
+    queryKey: ["panels", "forex"],
+    queryFn: async () => {
       const res = await fetch(`/api/forex?t=${Date.now()}`, { cache: "no-store" });
-      setData(await res.json());
-    } catch { /* keep */ } finally { setLoading(false); }
-  }, []);
-
-  useEffect(() => { load(); }, [load]);
-  useEffect(() => {
-    const id = window.setInterval(load, 60 * 60 * 1000);
-    return () => window.clearInterval(id);
-  }, [load]);
+      if (!res.ok) throw new Error(String(res.status));
+      return res.json() as Promise<ForexPayload>;
+    },
+    placeholderData: keepPreviousData,
+    refetchInterval: 60 * 60 * 1000,
+  });
 
   return (
-    <MiniPanel title="Exchange Rates" id="forex">
-      {loading ? <Spinner /> : (
+    <GrafanaMiniPanel
+      title="Exchange Rates"
+      id="forex"
+      actions={<PanelRefreshButton onClick={() => void refetch()} ariaLabel="Refresh exchange rates" />}
+    >
+      {isPending ? (
+        <Spinner />
+      ) : (
         <div className="divide-y divide-[var(--gf-panel-border)]">
           {(data?.rates ?? []).map((r) => {
             const meta = CURRENCY_META[r.code];
@@ -92,28 +69,23 @@ function ExchangeRatesPanel() {
           })}
         </div>
       )}
-    </MiniPanel>
+    </GrafanaMiniPanel>
   );
 }
 
 // ─── Indian Markets ───────────────────────────────────────────────────────────
 
 function IndianMarketsPanel() {
-  const [data, setData] = useState<MarketsPayload | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const load = useCallback(async () => {
-    try {
+  const { data, isPending, refetch } = useQuery({
+    queryKey: ["panels", "markets"],
+    queryFn: async () => {
       const res = await fetch(`/api/markets?t=${Date.now()}`, { cache: "no-store" });
-      setData(await res.json());
-    } catch { /* keep */ } finally { setLoading(false); }
-  }, []);
-
-  useEffect(() => { load(); }, [load]);
-  useEffect(() => {
-    const id = window.setInterval(load, 5 * 60 * 1000);
-    return () => window.clearInterval(id);
-  }, [load]);
+      if (!res.ok) throw new Error(String(res.status));
+      return res.json() as Promise<MarketsPayload>;
+    },
+    placeholderData: keepPreviousData,
+    refetchInterval: 5 * 60 * 1000,
+  });
 
   const liveBadge = data?.marketOpen ? (
     <span className="flex items-center gap-1 font-mono text-[0.55rem] font-bold text-[var(--gf-live)]">
@@ -123,8 +95,15 @@ function IndianMarketsPanel() {
   ) : null;
 
   return (
-    <MiniPanel title="Indian Markets" badge={liveBadge} id="markets">
-      {loading ? <Spinner /> : (
+    <GrafanaMiniPanel
+      title="Indian Markets"
+      badge={liveBadge}
+      id="markets"
+      actions={<PanelRefreshButton onClick={() => void refetch()} ariaLabel="Refresh market indices" />}
+    >
+      {isPending ? (
+        <Spinner />
+      ) : (
         <div className="divide-y divide-[var(--gf-panel-border)]">
           {(data?.indices ?? []).map((idx) => {
             const up = (idx.changePct ?? 0) >= 0;
@@ -154,41 +133,48 @@ function IndianMarketsPanel() {
           })}
         </div>
       )}
-    </MiniPanel>
+    </GrafanaMiniPanel>
   );
 }
 
 // ─── Petrol · Diesel · Gold ───────────────────────────────────────────────────
 
 function FuelPanel() {
-  const [data, setData] = useState<RetailRatesPayload | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch(`/api/retail-rates?t=${Date.now()}`, { cache: "no-store" })
-      .then((r) => r.json())
-      .then((j) => { setData(j); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, []);
+  const { data, isPending, refetch } = useQuery({
+    queryKey: ["panels", "retail-rates"],
+    queryFn: async () => {
+      const r = await fetch(`/api/retail-rates?t=${Date.now()}`, { cache: "no-store" });
+      if (!r.ok) throw new Error(String(r.status));
+      return r.json() as Promise<RetailRatesPayload>;
+    },
+    placeholderData: keepPreviousData,
+    refetchInterval: 15 * 60 * 1000,
+  });
 
   const inr = (n: number) =>
     new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(n);
   const inrInt = (n: number) =>
     new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
 
-  const rows = data ? [
-    { label: "Petrol",   value: inr(data.petrolInrPerLitre),          sub: "per litre",       color: "var(--gf-accent)" },
-    { label: "Diesel",   value: inr(data.dieselInrPerLitre),           sub: "per litre",       color: "var(--gf-accent)" },
-    { label: "LPG",      value: inrInt(data.lpgInrPerCylinder),        sub: "14.2 kg cylinder", color: "var(--gf-accent)" },
-    { label: "Gold 22K", value: inrInt(data.gold22Carat.inrPerGram),   sub: "per gram",        color: "var(--gf-warn)" },
-    { label: "1 Pavan",  value: inrInt(data.gold22Carat.inrPerPavan),  sub: `${data.gold22Carat.pavanGrams}g 22ct`, color: "var(--gf-warn)" },
-  ] : [];
-
-  const dateBadge = null;
+  const rows = data
+    ? [
+        { label: "Petrol",   value: inr(data.petrolInrPerLitre),          sub: "per litre",       color: "var(--gf-accent)" },
+        { label: "Diesel",   value: inr(data.dieselInrPerLitre),           sub: "per litre",       color: "var(--gf-accent)" },
+        { label: "LPG",      value: inrInt(data.lpgInrPerCylinder),        sub: "14.2 kg cylinder", color: "var(--gf-accent)" },
+        { label: "Gold 22K", value: inrInt(data.gold22Carat.inrPerGram),   sub: "per gram",        color: "var(--gf-warn)" },
+        { label: "1 Pavan",  value: inrInt(data.gold22Carat.inrPerPavan),  sub: `${data.gold22Carat.pavanGrams}g 22ct`, color: "var(--gf-warn)" },
+      ]
+    : [];
 
   return (
-    <MiniPanel title="Fuel &amp; Gold" id="retail-rates">
-      {loading ? <Spinner /> : (
+    <GrafanaMiniPanel
+      title="Fuel &amp; Gold"
+      id="retail-rates"
+      actions={<PanelRefreshButton onClick={() => void refetch()} ariaLabel="Refresh fuel and gold rates" />}
+    >
+      {isPending ? (
+        <Spinner />
+      ) : (
         <div className="divide-y divide-[var(--gf-panel-border)]">
           {rows.map((r) => (
             <div key={r.label} className="flex items-center justify-between px-3 py-2.5 hover:bg-white/[0.03]">
@@ -203,7 +189,7 @@ function FuelPanel() {
           ))}
         </div>
       )}
-    </MiniPanel>
+    </GrafanaMiniPanel>
   );
 }
 
@@ -226,21 +212,16 @@ function timeAgo(ms: number) {
 }
 
 function SeismicPanel() {
-  const [data, setData] = useState<QuakePayload | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const load = useCallback(async () => {
-    try {
+  const { data, isPending, refetch } = useQuery({
+    queryKey: ["panels", "earthquakes"],
+    queryFn: async () => {
       const res = await fetch(`/api/earthquakes?t=${Date.now()}`, { cache: "no-store" });
-      setData(await res.json());
-    } catch { /* keep */ } finally { setLoading(false); }
-  }, []);
-
-  useEffect(() => { load(); }, [load]);
-  useEffect(() => {
-    const id = window.setInterval(load, 15 * 60 * 1000);
-    return () => window.clearInterval(id);
-  }, [load]);
+      if (!res.ok) throw new Error(String(res.status));
+      return res.json() as Promise<QuakePayload>;
+    },
+    placeholderData: keepPreviousData,
+    refetchInterval: 15 * 60 * 1000,
+  });
 
   const countBadge = data ? (
     <span className="rounded-sm bg-[var(--gf-warn)]/20 px-1.5 py-0.5 font-mono text-[0.55rem] font-bold text-[var(--gf-warn)]">
@@ -249,8 +230,15 @@ function SeismicPanel() {
   ) : null;
 
   return (
-    <MiniPanel title="Seismic · 30d" badge={countBadge} id="earthquakes">
-      {loading ? <Spinner /> : !data?.quakes.length ? (
+    <GrafanaMiniPanel
+      title="Seismic · 30d"
+      badge={countBadge}
+      id="earthquakes"
+      actions={<PanelRefreshButton onClick={() => void refetch()} ariaLabel="Refresh earthquake feed" />}
+    >
+      {isPending ? (
+        <Spinner />
+      ) : !data?.quakes.length ? (
         <div className="px-3 py-4 text-center font-mono text-[0.72rem] text-[var(--gf-text-muted)]">
           No significant activity in last 30 days
         </div>
@@ -278,7 +266,7 @@ function SeismicPanel() {
           ))}
         </div>
       )}
-    </MiniPanel>
+    </GrafanaMiniPanel>
   );
 }
 

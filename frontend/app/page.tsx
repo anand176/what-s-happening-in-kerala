@@ -1,7 +1,10 @@
 import { AlertBanner } from "@/components/chrome/AlertBanner";
 import { MainNav } from "@/components/chrome/MainNav";
 import { SiteHeader } from "@/components/chrome/SiteHeader";
+import { getFestivalsPayload } from "@/lib/server/festivals-data";
+import { getMoviesPayload } from "@/lib/server/movies-data";
 import { GrafanaPanel } from "@/components/grafana/GrafanaPanel";
+import { RouterRefreshButton } from "@/components/grafana/RouterRefreshButton";
 import { GrafanaDashRow } from "@/components/GrafanaDashRow";
 import { GrafanaDataRow } from "@/components/GrafanaDataRow";
 import { KeralaMapWeatherLoader } from "@/components/KeralaMapWeatherLoader";
@@ -9,8 +12,8 @@ import { NewsSection } from "@/components/NewsSection";
 import { StreamEmbeds } from "@/components/StreamEmbeds";
 import { GITHUB_REPO_URL } from "@/config/site";
 import { youtubeStreamEntries } from "@/config/sources";
-import festivals from "@/data/festivals.json";
-import movies from "@/data/movies.json";
+
+export const dynamic = "force-dynamic";
 
 type Upcoming = {
   title: string;
@@ -19,6 +22,25 @@ type Upcoming = {
   link?: string;
   poster?: string;
 };
+
+async function loadFestivalsAndMovies(): Promise<{ festivalItems: Upcoming[]; movieItems: Upcoming[] }> {
+  const [fest, movies] = await Promise.all([getFestivalsPayload(), getMoviesPayload()]);
+
+  const festivalItems: Upcoming[] = (fest.items ?? []).map((i) => ({
+    title: i.title,
+    date: String(i.date ?? "").slice(0, 10),
+    note: i.note || undefined,
+  }));
+
+  const movieItems: Upcoming[] = (movies.items ?? []).map((i) => ({
+    title: i.title,
+    date: String(i.date ?? "").slice(0, 10),
+    note: i.note || undefined,
+    poster: i.poster ?? undefined,
+  }));
+
+  return { festivalItems, movieItems };
+}
 
 function formatMovieDateLine(raw: string): string {
   if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
@@ -34,28 +56,16 @@ function formatMovieDateLine(raw: string): string {
   return raw;
 }
 
-// Accent colours cycling per card
-const FEST_ACCENTS = [
-  "#f05a28", // orange
-  "#3fb950", // green
-  "#f5a623", // gold
-  "#7c6af7", // purple
-  "#e24d4d", // red
-  "#29b6f6", // blue
-];
 function daysUntilLabel(dateStr: string): string | null {
-  const diff = Math.ceil(
-    (new Date(dateStr).getTime() - Date.now()) / 86400000,
-  );
+  const diff = Math.ceil((new Date(dateStr).getTime() - Date.now()) / 86400000);
   if (diff < 0) return null;
   if (diff === 0) return "Today!";
   if (diff === 1) return "Tomorrow!";
   return `${diff} days away`;
 }
 
-export default function Home() {
-  const festivalItems = festivals as Upcoming[];
-  const movieItems = movies as Upcoming[];
+export default async function Home() {
+  const { festivalItems, movieItems } = await loadFestivalsAndMovies();
 
   const mlFest =
     "\u0D35\u0D30\u0D3E\u0D28\u0D3F\u0D30\u0D3F\u0D15\u0D4D\u0D15\u0D41\u0D28\u0D4D\u0D28 \u0D06\u0D18\u0D4B\u0D37\u0D19\u0D4D\u0D19\u0D7E";
@@ -63,7 +73,7 @@ export default function Home() {
     "\u0D2E\u0D32\u0D2F\u0D3E\u0D33\u0D02 \u0D38\u0D3F\u0D28\u0D3F\u0D2E";
 
   return (
-    <div className="min-h-full bg-[var(--gf-page)]">
+    <div className="min-h-full bg-[#0b0f14]">
       <div className="gf-top-stripe" aria-hidden />
       <SiteHeader />
       <AlertBanner />
@@ -85,10 +95,18 @@ export default function Home() {
           title="Upcoming festivals"
           subtitle={mlFest}
           className="kt-animate-in kt-stagger-4 scroll-mt-[120px]"
+          rightSlot={<RouterRefreshButton />}
         >
           {festivalItems.length === 0 ? (
             <p className="text-[0.85rem] text-[var(--gf-text-muted)]">
-              Add entries in data/festivals.json.
+              No upcoming festivals loaded. Optional: set{" "}
+              <code className="font-mono text-[var(--gf-accent)]">CALENDARIFIC_API_KEY</code> in{" "}
+              Vercel → Env (Production) for richer Kerala data — otherwise the API uses free fallbacks. If this
+              stays empty after a{" "}
+              <strong className="text-[var(--gf-text-muted)]">redeploy</strong>, open{" "}
+              <code className="font-mono text-[var(--gf-accent)]">/api/festivals</code> (only set{" "}
+              <code className="font-mono text-[var(--gf-accent)]">NEXT_PUBLIC_APP_URL</code> to your public
+              URL if redirects / self-fetch cause issues — the app prefers the incoming request Host).
             </p>
           ) : (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
@@ -108,27 +126,26 @@ export default function Home() {
                       key={`${item.title}-${item.date}`}
                       className="kt-card-hover gf-subpanel relative flex items-stretch overflow-hidden"
                     >
-                      {/* Content */}
                       <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 px-3 py-3">
                         <div className="text-[0.88rem] font-semibold leading-snug text-[var(--gf-text)]">
                           {item.title}
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
-                          <span
-                            className="font-mono text-[0.62rem] font-semibold text-[var(--gf-text-muted)]"
-                          >
+                          <span className="font-mono text-[0.62rem] font-semibold text-[var(--gf-text-muted)]">
                             {dateLabel}
                           </span>
                           <span className="font-mono text-[0.6rem] capitalize text-[var(--gf-text-muted)]">
                             {weekdayLabel}
                           </span>
                         </div>
+                        {item.note ? (
+                          <div className="font-mono text-[0.55rem] leading-snug text-[var(--gf-text-muted)] opacity-90">
+                            {item.note}
+                          </div>
+                        ) : null}
                       </div>
-                      {/* Countdown badge */}
                       <div className="flex shrink-0 items-center pr-3">
-                        <span
-                          className="rounded-sm px-2 py-1 text-center font-mono text-[0.6rem] font-bold leading-tight border border-[var(--gf-panel-border)] bg-[var(--gf-panel-inner)] text-[var(--gf-text-muted)]"
-                        >
+                        <span className="rounded-sm border border-[var(--gf-panel-border)] bg-[var(--gf-panel-inner)] px-2 py-1 text-center font-mono text-[0.6rem] leading-tight font-bold text-[var(--gf-text-muted)]">
                           {countdown === "Today!" || countdown === "Tomorrow!" ? (
                             countdown
                           ) : (
@@ -154,7 +171,12 @@ export default function Home() {
         >
           {movieItems.length === 0 ? (
             <p className="text-[0.85rem] text-[var(--gf-text-muted)]">
-              Add entries in data/movies.json.
+              No Malayalam listings from Watchmode. Add{" "}
+              <code className="font-mono text-[var(--gf-accent)]">WATCHMODE_API_KEY</code> in{" "}
+              Vercel → Env (Production) for Serverless Functions,{" "}
+              <strong className="text-[var(--gf-text-muted)]">save</strong>, then{" "}
+              <strong className="text-[var(--gf-text-muted)]">Redeploy</strong>. Inspect{" "}
+              <code className="font-mono text-[var(--gf-accent)]">/api/movies</code> for JSON.
             </p>
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
@@ -173,18 +195,12 @@ export default function Home() {
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center text-4xl">
-                        {
-                          ["\u{1F3AC}", "\u{1F39E}\uFE0F", "\u{1F3AD}", "\u{1F3DE}\uFE0F"][
-                            i % 4
-                          ]
-                        }
+                        {["\u{1F3AC}", "\u{1F39E}\uFE0F", "\u{1F3AD}", "\u{1F3DE}\uFE0F"][i % 4]}
                       </div>
                     )}
                   </div>
                   <div className="p-2">
-                    <div className="line-clamp-2 text-[0.78rem] text-[var(--gf-text)]">
-                      {item.title}
-                    </div>
+                    <div className="line-clamp-2 text-[0.78rem] text-[var(--gf-text)]">{item.title}</div>
                     <div className="mt-1 font-mono text-[0.62rem] text-[var(--gf-text-muted)]">
                       {formatMovieDateLine(item.date)}
                     </div>

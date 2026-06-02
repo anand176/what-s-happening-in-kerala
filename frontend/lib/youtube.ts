@@ -20,8 +20,8 @@ export function youtubeVideoIdFromUrl(input: string): string | null {
 }
 
 /**
- * Embed URL with autoplay. `mute=1` is required for autoplay in most browsers until
- * the user has interacted with the page; they can unmute in the YouTube controls.
+ * Dashboard embed: autoplay on load. Muted is required for autoplay in most browsers.
+ * Users can unmute from the player when the stream allows it.
  */
 export function youtubeEmbedUrl(videoId: string): string {
   const u = new URL(
@@ -30,5 +30,6 @@ export function youtubeEmbedUrl(videoId: string): string {
   u.searchParams.set("autoplay", "1");
   u.searchParams.set("mute", "1");
   u.searchParams.set("playsinline", "1");
+  u.searchParams.set("rel", "0");
   return u.toString();
 }

@@ -6,6 +6,7 @@ import {
   Playfair_Display,
 } from "next/font/google";
 import "./globals.css";
+import { QueryProviders } from "@/components/QueryProviders";
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
@@ -47,8 +48,14 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${dmSans.variable} ${playfair.variable} ${notoMlSerif.variable} ${notoMlSans.variable} h-full antialiased`}
+      style={{ backgroundColor: "#0b0f14", color: "#d8dee9", colorScheme: "dark" }}
     >
-      <body className="min-h-full flex flex-col font-sans">{children}</body>
+      <body
+        className="min-h-full flex flex-col font-sans"
+        style={{ backgroundColor: "#0b0f14", color: "#d8dee9" }}
+      >
+        <QueryProviders>{children}</QueryProviders>
+      </body>
     </html>
   );
 }

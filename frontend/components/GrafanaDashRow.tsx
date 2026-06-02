@@ -1,12 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import type { AqiPayload } from "@/app/api/aqi/route";
 import type { QuakePayload } from "@/app/api/earthquakes/route";
+import { GrafanaMiniPanel } from "@/components/grafana/GrafanaMiniPanel";
+import { PanelRefreshButton } from "@/components/grafana/PanelRefreshButton";
 import { keralaMainCities, openMeteoMultiCityUrl } from "@/config/kerala-cities";
 import { weatherCodeLabel } from "@/lib/weather";
-
-// ─── shared helpers ────────────────────────────────────────────────────────────
 
 /** European AQI (EAQI) 0–500 → label + colour */
 function aqiMeta(idx: number | null): { label: string; color: string } {
@@ -36,32 +36,6 @@ function timeAgo(epochMs: number): string {
   return `${Math.floor(h / 24)}d ago`;
 }
 
-// ─── mini-panel shell ─────────────────────────────────────────────────────────
-
-function MiniPanel({
-  title,
-  badge,
-  id,
-  children,
-}: {
-  title: string;
-  badge?: React.ReactNode;
-  id?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div id={id} className="gf-panel flex min-w-0 flex-1 flex-col scroll-mt-[120px]">
-      <div className="flex items-center gap-2 border-b border-[var(--gf-panel-border)] bg-black/20 px-3 py-2">
-        <span className="flex-1 font-mono text-[0.68rem] font-semibold tracking-widest text-[var(--gf-text)] uppercase">
-          {title}
-        </span>
-        {badge}
-      </div>
-      <div className="flex-1 overflow-y-auto">{children}</div>
-    </div>
-  );
-}
-
 function Spinner() {
   return (
     <div className="flex items-center justify-center py-6">
@@ -80,27 +54,21 @@ type WeatherRow = {
 };
 
 function CityWeatherPanel() {
-  const [rows, setRows] = useState<WeatherRow[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch(openMeteoMultiCityUrl())
-      .then((r) => r.json())
-      .then((json) => {
-        if (cancelled) return;
-        const list = Array.isArray(json) ? json : [json];
-        setRows(keralaMainCities.map((c, i) => ({
-          district: c.district,
-          temperature: list[i]?.current_weather?.temperature ?? 0,
-          weathercode: list[i]?.current_weather?.weathercode ?? 0,
-          windspeed: list[i]?.current_weather?.windspeed ?? 0,
-        })));
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-    return () => { cancelled = true; };
-  }, []);
+  const { data: rows = [], isPending, refetch } = useQuery({
+    queryKey: ["panels", "openmeteo-cities-strip"],
+    queryFn: async () => {
+      const json = await fetch(openMeteoMultiCityUrl(), { cache: "no-store" }).then((r) => r.json());
+      const list = Array.isArray(json) ? json : [json];
+      return keralaMainCities.map((c, i) => ({
+        district: c.district,
+        temperature: list[i]?.current_weather?.temperature ?? 0,
+        weathercode: list[i]?.current_weather?.weathercode ?? 0,
+        windspeed: list[i]?.current_weather?.windspeed ?? 0,
+      })) as WeatherRow[];
+    },
+    placeholderData: keepPreviousData,
+    refetchInterval: 10 * 60 * 1000,
+  });
 
   const liveBadge = (
     <span className="rounded-sm bg-[var(--gf-live)] px-1.5 py-0.5 font-mono text-[0.55rem] font-bold text-black">
@@ -109,8 +77,15 @@ function CityWeatherPanel() {
   );
 
   return (
-    <MiniPanel title="City Weather" badge={liveBadge} id="weather-section">
-      {loading ? <Spinner /> : (
+    <GrafanaMiniPanel
+      title="City Weather"
+      badge={liveBadge}
+      id="weather-section"
+      actions={<PanelRefreshButton onClick={() => void refetch()} ariaLabel="Refresh city weather" />}
+    >
+      {isPending ? (
+        <Spinner />
+      ) : (
         <div className="divide-y divide-[var(--gf-panel-border)]">
           {rows.map((r) => (
             <div key={r.district} className="flex h-[52px] items-center justify-between px-3 hover:bg-white/[0.03]">
@@ -129,32 +104,33 @@ function CityWeatherPanel() {
           ))}
         </div>
       )}
-    </MiniPanel>
+    </GrafanaMiniPanel>
   );
 }
 
 // ─── Air Quality ──────────────────────────────────────────────────────────────
 
 function AirQualityPanel() {
-  const [data, setData] = useState<AqiPayload | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const load = useCallback(async () => {
-    try {
+  const { data, isPending, refetch } = useQuery({
+    queryKey: ["panels", "aqi"],
+    queryFn: async () => {
       const res = await fetch(`/api/aqi?t=${Date.now()}`, { cache: "no-store" });
-      setData(await res.json());
-    } catch { /* keep */ } finally { setLoading(false); }
-  }, []);
-
-  useEffect(() => { load(); }, [load]);
-  useEffect(() => {
-    const id = window.setInterval(load, 10 * 60 * 1000);
-    return () => window.clearInterval(id);
-  }, [load]);
+      if (!res.ok) throw new Error(String(res.status));
+      return res.json() as Promise<AqiPayload>;
+    },
+    placeholderData: keepPreviousData,
+    refetchInterval: 10 * 60 * 1000,
+  });
 
   return (
-    <MiniPanel title="Air Quality" id="aqi">
-      {loading ? <Spinner /> : (
+    <GrafanaMiniPanel
+      title="Air Quality"
+      id="aqi"
+      actions={<PanelRefreshButton onClick={() => void refetch()} ariaLabel="Refresh air quality data" />}
+    >
+      {isPending ? (
+        <Spinner />
+      ) : (
         <div className="divide-y divide-[var(--gf-panel-border)]">
           {(data?.cities ?? []).map((c) => {
             const meta = aqiMeta(c.aqi_index);
@@ -185,28 +161,23 @@ function AirQualityPanel() {
           })}
         </div>
       )}
-    </MiniPanel>
+    </GrafanaMiniPanel>
   );
 }
 
-// ─── Earthquakes ──────────────────────────────────────────────────────────────
+// ─── Earthquakes (same API cache as seismic strip in GrafanaDataRow) ────────────
 
 function EarthquakesPanel() {
-  const [data, setData] = useState<QuakePayload | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const load = useCallback(async () => {
-    try {
+  const { data, isPending, refetch } = useQuery({
+    queryKey: ["panels", "earthquakes"],
+    queryFn: async () => {
       const res = await fetch(`/api/earthquakes?t=${Date.now()}`, { cache: "no-store" });
-      setData(await res.json());
-    } catch { /* keep */ } finally { setLoading(false); }
-  }, []);
-
-  useEffect(() => { load(); }, [load]);
-  useEffect(() => {
-    const id = window.setInterval(load, 15 * 60 * 1000);
-    return () => window.clearInterval(id);
-  }, [load]);
+      if (!res.ok) throw new Error(String(res.status));
+      return res.json() as Promise<QuakePayload>;
+    },
+    placeholderData: keepPreviousData,
+    refetchInterval: 15 * 60 * 1000,
+  });
 
   const countBadge = data ? (
     <span className="rounded-sm bg-[var(--gf-warn)]/20 px-1.5 py-0.5 font-mono text-[0.6rem] font-bold text-[var(--gf-warn)]">
@@ -215,8 +186,15 @@ function EarthquakesPanel() {
   ) : null;
 
   return (
-    <MiniPanel title="Earthquakes & Disasters" badge={countBadge} id="earthquakes">
-      {loading ? <Spinner /> : !data?.quakes.length ? (
+    <GrafanaMiniPanel
+      title="Earthquakes & Disasters"
+      badge={countBadge}
+      id="earthquakes-dash"
+      actions={<PanelRefreshButton onClick={() => void refetch()} ariaLabel="Refresh earthquake feed" />}
+    >
+      {isPending ? (
+        <Spinner />
+      ) : !data?.quakes.length ? (
         <div className="px-3 py-4 text-center font-mono text-[0.72rem] text-[var(--gf-text-muted)]">
           No significant activity in last 30 days
         </div>
@@ -247,7 +225,7 @@ function EarthquakesPanel() {
           })}
         </div>
       )}
-    </MiniPanel>
+    </GrafanaMiniPanel>
   );
 }
 
