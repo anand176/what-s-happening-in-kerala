@@ -35,7 +35,8 @@ export const metadata: Metadata = {
   description:
     "Live streams, Kerala map, fuel & gold, news, festivals and movies — God's Own Country dashboard.",
   icons: {
-    icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥥</text></svg>",
+    icon: [{ url: "/logo.svg", type: "image/svg+xml" }],
+    apple: "/logo.png",
   },
 };
 

@@ -97,10 +97,17 @@ export function SiteHeader() {
       <div className="gf-site-header-main flex items-center justify-between px-4 py-3 md:px-6">
         <div className="flex items-center gap-3">
           <div
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm border border-[var(--gf-panel-border)] bg-[var(--gf-panel-inner)] text-xl"
+            className="relative h-10 w-10 shrink-0 overflow-hidden rounded-sm border border-[var(--gf-panel-border)] bg-white"
             style={{ boxShadow: "inset 0 0 0 1px rgba(240,90,40,0.25)" }}
           >
-            🥥
+            <img
+              src="/logo.svg"
+              alt="Kerala Monitor"
+              width={40}
+              height={40}
+              className="h-full w-full object-contain"
+              decoding="async"
+            />
           </div>
           <div>
             <h1 className="font-mono text-[13px] font-bold tracking-[0.12em] text-[var(--gf-text)] uppercase md:text-sm">
