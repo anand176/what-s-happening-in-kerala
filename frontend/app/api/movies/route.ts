@@ -11,6 +11,8 @@ export type { MovieItem, MoviesPayload } from "@/lib/server/movies-data";
 export async function GET() {
   const body = await getMoviesPayload();
   return NextResponse.json(body satisfies MoviesPayload, {
-    headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=7200" },
+    headers: {
+      "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=86400",
+    },
   });
 }
