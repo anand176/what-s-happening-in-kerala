@@ -10,11 +10,18 @@ export type MovieItem = {
 
 export type MoviesPayload = {
   items: MovieItem[];
+  /** Future release dates (up to 5), earliest first — not duplicated in `items`. */
+  upcoming: MovieItem[];
   source: string;
   error: string | null;
 };
 
 const WATCHMODE_BASE = process.env.WATCHMODE_API_BASE || "https://api.watchmode.com/v1";
+
+/** Pool size from Watchmode before splitting into now / upcoming lists. */
+const MOVIES_FETCH_LIMIT = 30;
+const MOVIES_NOW_LIMIT = 15;
+const MOVIES_UPCOMING_LIMIT = 5;
 
 /** Refresh Watchmode at most once per day to stay within free-tier rate limits. */
 const MOVIES_CACHE_SECONDS = 86_400;
@@ -24,13 +31,14 @@ async function fetchMoviesFromWatchmode(): Promise<MoviesPayload> {
   if (!key) {
     return {
       items: [],
+      upcoming: [],
       source: "none",
       error: "WATCHMODE_API_KEY is not configured.",
     };
   }
 
   try {
-    const listUrl = `${WATCHMODE_BASE}/list-titles/?apiKey=${key}&languages=ml&sort_by=release_date_desc&limit=10`;
+    const listUrl = `${WATCHMODE_BASE}/list-titles/?apiKey=${key}&languages=ml&types=movie&sort_by=release_date_desc&limit=${MOVIES_FETCH_LIMIT}`;
     const listRes = await fetch(listUrl, { cache: "no-store" });
 
     if (!listRes.ok) {
@@ -56,7 +64,7 @@ async function fetchMoviesFromWatchmode(): Promise<MoviesPayload> {
       }
     }
 
-    const items: MovieItem[] = details.map((d) => {
+    const allItems: MovieItem[] = details.map((d) => {
       const releaseDate =
         typeof d.release_date === "string" && d.release_date
           ? d.release_date
@@ -80,15 +88,28 @@ async function fetchMoviesFromWatchmode(): Promise<MoviesPayload> {
 
       return {
         title: String(d.title ?? ""),
-        date: releaseDate,
+        date: releaseDate.slice(0, 10),
         note,
         poster: typeof d.poster === "string" ? d.poster : null,
         releaseType,
       };
     });
 
+    const upcoming = allItems
+      .filter((i) => i.date > todayStr)
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .slice(0, MOVIES_UPCOMING_LIMIT);
+
+    const upcomingKeys = new Set(upcoming.map((i) => `${i.title}|${i.date}`));
+
+    const items = allItems
+      .filter((i) => !upcomingKeys.has(`${i.title}|${i.date}`))
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .slice(0, MOVIES_NOW_LIMIT);
+
     return {
       items,
+      upcoming,
       source: "watchmode",
       error: null,
     };
@@ -100,7 +121,7 @@ async function fetchMoviesFromWatchmode(): Promise<MoviesPayload> {
 
 const getCachedMovies = unstable_cache(
   fetchMoviesFromWatchmode,
-  ["watchmode-malayalam-movies"],
+  ["watchmode-malayalam-movies", String(MOVIES_FETCH_LIMIT), "split-upcoming"],
   { revalidate: MOVIES_CACHE_SECONDS, tags: ["movies"] },
 );
 
@@ -109,6 +130,7 @@ export async function getMoviesPayload(): Promise<MoviesPayload> {
   if (!process.env.WATCHMODE_API_KEY) {
     return {
       items: [],
+      upcoming: [],
       source: "none",
       error: "WATCHMODE_API_KEY is not configured.",
     };
@@ -118,6 +140,7 @@ export async function getMoviesPayload(): Promise<MoviesPayload> {
   } catch (e) {
     return {
       items: [],
+      upcoming: [],
       source: "none",
       error: `Failed to fetch live updates from Watchmode. (Error: ${String(e)})`,
     };

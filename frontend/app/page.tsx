@@ -23,7 +23,11 @@ type Upcoming = {
   poster?: string;
 };
 
-async function loadFestivalsAndMovies(): Promise<{ festivalItems: Upcoming[]; movieItems: Upcoming[] }> {
+async function loadFestivalsAndMovies(): Promise<{
+  festivalItems: Upcoming[];
+  movieItems: Upcoming[];
+  upcomingMovieItems: Upcoming[];
+}> {
   const [fest, movies] = await Promise.all([getFestivalsPayload(), getMoviesPayload()]);
 
   const festivalItems: Upcoming[] = (fest.items ?? []).map((i) => ({
@@ -32,14 +36,29 @@ async function loadFestivalsAndMovies(): Promise<{ festivalItems: Upcoming[]; mo
     note: i.note || undefined,
   }));
 
-  const movieItems: Upcoming[] = (movies.items ?? []).map((i) => ({
+  const mapMovie = (i: {
+    title: string;
+    date: string;
+    note: string;
+    poster: string | null;
+    releaseType: "theatrical" | "ott";
+  }): Upcoming => ({
     title: i.title,
     date: String(i.date ?? "").slice(0, 10),
     note: i.note || undefined,
     poster: i.poster ?? undefined,
-  }));
+  });
 
-  return { festivalItems, movieItems };
+  const movieItems = (movies.items ?? []).map(mapMovie);
+  const upcomingMovieItems = (movies.upcoming ?? []).map(mapMovie);
+
+  return { festivalItems, movieItems, upcomingMovieItems };
+}
+
+function movieBadgeLabel(item: Upcoming, section: "upcoming" | "now"): string {
+  if (section === "upcoming") return "Upcoming";
+  if (item.note?.startsWith("Streaming")) return "OTT";
+  return "Showtime";
 }
 
 function formatMovieDateLine(raw: string): string {
@@ -65,7 +84,7 @@ function daysUntilLabel(dateStr: string): string | null {
 }
 
 export default async function Home() {
-  const { festivalItems, movieItems } = await loadFestivalsAndMovies();
+  const { festivalItems, movieItems, upcomingMovieItems } = await loadFestivalsAndMovies();
 
   const mlFest =
     "\u0D35\u0D30\u0D3E\u0D28\u0D3F\u0D30\u0D3F\u0D15\u0D4D\u0D15\u0D41\u0D28\u0D4D\u0D28 \u0D06\u0D18\u0D4B\u0D37\u0D19\u0D4D\u0D19\u0D7E";
@@ -169,7 +188,7 @@ export default async function Home() {
           subtitle={mlMovies}
           className="kt-animate-in kt-stagger-5 scroll-mt-[120px]"
         >
-          {movieItems.length === 0 ? (
+          {movieItems.length === 0 && upcomingMovieItems.length === 0 ? (
             <p className="text-[0.85rem] text-[var(--gf-text-muted)]">
               No Malayalam listings from Watchmode. Add{" "}
               <code className="font-mono text-[var(--gf-accent)]">WATCHMODE_API_KEY</code> in{" "}
@@ -179,42 +198,110 @@ export default async function Home() {
               <code className="font-mono text-[var(--gf-accent)]">/api/movies</code> for JSON.
             </p>
           ) : (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-              {movieItems.map((item, i) => (
-                <div
-                  key={`${item.title}-${item.date}-${i}`}
-                  className="kt-card-hover gf-subpanel cursor-default overflow-hidden"
-                >
-                  <div className="relative aspect-[2/3] overflow-hidden border-b border-[var(--gf-panel-border)] bg-[var(--gf-panel-inner)]">
-                    {item.poster ? (
-                      <img
-                        src={item.poster}
-                        alt={item.title}
-                        className="h-full w-full object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-4xl">
-                        {["\u{1F3AC}", "\u{1F39E}\uFE0F", "\u{1F3AD}", "\u{1F3DE}\uFE0F"][i % 4]}
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-2">
-                    <div className="line-clamp-2 text-[0.78rem] text-[var(--gf-text)]">{item.title}</div>
-                    <div className="mt-1 font-mono text-[0.62rem] text-[var(--gf-text-muted)]">
-                      {formatMovieDateLine(item.date)}
-                    </div>
-                    {item.note ? (
-                      <div className="mt-0.5 text-[0.58rem] leading-snug text-[var(--gf-text-muted)] opacity-90">
-                        {item.note}
-                      </div>
-                    ) : null}
-                    <span className="mt-1 inline-block rounded-sm border border-[var(--gf-live)]/40 bg-[rgba(63,185,80,0.12)] px-1.5 py-0.5 font-mono text-[0.55rem] font-bold text-[var(--gf-live)]">
-                      Showtime
-                    </span>
+            <div className="space-y-6">
+              {upcomingMovieItems.length > 0 ? (
+                <div>
+                  <h3 className="mb-3 font-mono text-[0.68rem] font-semibold tracking-wider text-[var(--gf-accent)] uppercase">
+                    Upcoming
+                  </h3>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                    {upcomingMovieItems.map((item, i) => {
+                      const countdown = daysUntilLabel(item.date);
+                      const badge = movieBadgeLabel(item, "upcoming");
+                      return (
+                        <div
+                          key={`up-${item.title}-${item.date}-${i}`}
+                          className="kt-card-hover gf-subpanel cursor-default overflow-hidden"
+                        >
+                          <div className="relative aspect-[2/3] overflow-hidden border-b border-[var(--gf-panel-border)] bg-[var(--gf-panel-inner)]">
+                            {item.poster ? (
+                              <img
+                                src={item.poster}
+                                alt={item.title}
+                                className="h-full w-full object-cover"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center text-4xl">
+                                {["\u{1F3AC}", "\u{1F39E}\uFE0F", "\u{1F3AD}", "\u{1F3DE}\uFE0F"][i % 4]}
+                              </div>
+                            )}
+                          </div>
+                          <div className="p-2">
+                            <div className="line-clamp-2 text-[0.78rem] text-[var(--gf-text)]">{item.title}</div>
+                            <div className="mt-1 font-mono text-[0.62rem] text-[var(--gf-text-muted)]">
+                              {formatMovieDateLine(item.date)}
+                              {countdown ? ` · ${countdown}` : ""}
+                            </div>
+                            {item.note ? (
+                              <div className="mt-0.5 text-[0.58rem] leading-snug text-[var(--gf-text-muted)] opacity-90">
+                                {item.note}
+                              </div>
+                            ) : null}
+                            <span className="mt-1 inline-block rounded-sm border border-[var(--gf-accent)]/40 bg-[var(--gf-accent-soft)] px-1.5 py-0.5 font-mono text-[0.55rem] font-bold text-[var(--gf-accent)]">
+                              {badge}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
-              ))}
+              ) : null}
+              {movieItems.length > 0 ? (
+                <div>
+                  <h3 className="mb-3 font-mono text-[0.68rem] font-semibold tracking-wider text-[var(--gf-text-muted)] uppercase">
+                    Now showing &amp; streaming
+                  </h3>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                    {movieItems.map((item, i) => {
+                      const badge = movieBadgeLabel(item, "now");
+                      const isOtt = badge === "OTT";
+                      return (
+                        <div
+                          key={`${item.title}-${item.date}-${i}`}
+                          className="kt-card-hover gf-subpanel cursor-default overflow-hidden"
+                        >
+                          <div className="relative aspect-[2/3] overflow-hidden border-b border-[var(--gf-panel-border)] bg-[var(--gf-panel-inner)]">
+                            {item.poster ? (
+                              <img
+                                src={item.poster}
+                                alt={item.title}
+                                className="h-full w-full object-cover"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center text-4xl">
+                                {["\u{1F3AC}", "\u{1F39E}\uFE0F", "\u{1F3AD}", "\u{1F3DE}\uFE0F"][i % 4]}
+                              </div>
+                            )}
+                          </div>
+                          <div className="p-2">
+                            <div className="line-clamp-2 text-[0.78rem] text-[var(--gf-text)]">{item.title}</div>
+                            <div className="mt-1 font-mono text-[0.62rem] text-[var(--gf-text-muted)]">
+                              {formatMovieDateLine(item.date)}
+                            </div>
+                            {item.note ? (
+                              <div className="mt-0.5 text-[0.58rem] leading-snug text-[var(--gf-text-muted)] opacity-90">
+                                {item.note}
+                              </div>
+                            ) : null}
+                            <span
+                              className={`mt-1 inline-block rounded-sm border px-1.5 py-0.5 font-mono text-[0.55rem] font-bold ${
+                                isOtt
+                                  ? "border-[var(--gf-warn)]/40 bg-[rgba(249,168,37,0.12)] text-[var(--gf-warn)]"
+                                  : "border-[var(--gf-live)]/40 bg-[rgba(63,185,80,0.12)] text-[var(--gf-live)]"
+                              }`}
+                            >
+                              {badge}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
             </div>
           )}
         </GrafanaPanel>
