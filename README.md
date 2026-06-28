@@ -1,4 +1,4 @@
-# What's happening in Kerala🥥
+# What's happening in Kerala
 
 A real-time command-center dashboard for Kerala, built with a dark Grafana-inspired UI. Everything you need to know about God's Own Country — weather, air quality, markets, news, seismic activity, fuel prices, festivals, and more — in one place.
 
@@ -76,4 +76,15 @@ kerala-dashboard/
 - **Tailwind CSS v4**
 - **Leaflet + react-leaflet** — district map
 - **rss-parser** — server-side RSS aggregation
-- Open-Meteo, USGS, Yahoo Finance, open.er-api.com API
+- Open-Meteo, Yahoo Finance, open.er-api.com API, Watchmode API
+
+## Screenshots
+
+<img width="1896" height="860" alt="image" src="https://github.com/user-attachments/assets/b781403e-6633-433f-b57e-2b0764a5e396" />
+
+<img width="1898" height="860" alt="image" src="https://github.com/user-attachments/assets/04fad288-ad7c-4193-a55a-2b93355a4038" />
+
+<img width="1900" height="857" alt="image" src="https://github.com/user-attachments/assets/4cf5e8e2-b43e-45b9-bbc0-82b0afc1dd53" />
+
+
+
