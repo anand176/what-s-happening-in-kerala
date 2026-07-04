@@ -1,3 +1,4 @@
+/** External source list for Kerala news: live YouTube channels and RSS feeds. */
 import { youtubeVideoIdFromUrl } from "@/lib/youtube";
 
 /** Kerala news YouTube live streams — shown in order. */

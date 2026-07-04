@@ -18,7 +18,7 @@ A real-time command-center dashboard for Kerala, built with a dark Grafana-inspi
 | **Fuel & Gold** | Petrol, diesel, LPG, and 22K gold rates for Kerala (editable JSON) |
 | **Headlines** | Merged RSS feeds from The Hindu Kerala and New Indian Express |
 | **Upcoming festivals** | Public holidays and festivals with countdown |
-| **Malayalam movies** | Current and upcoming releases with poster art |
+| **Malayalam movies** | Currently showing & streaming releases with poster art |
 | **Site header** | Malayalam calendar date (Kollam Era), live clock, and weather strip for 5 cities |
 
 ---

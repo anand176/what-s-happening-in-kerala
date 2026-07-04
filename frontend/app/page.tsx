@@ -26,7 +26,6 @@ type Upcoming = {
 async function loadFestivalsAndMovies(): Promise<{
   festivalItems: Upcoming[];
   movieItems: Upcoming[];
-  upcomingMovieItems: Upcoming[];
 }> {
   const [fest, movies] = await Promise.all([getFestivalsPayload(), getMoviesPayload()]);
 
@@ -50,9 +49,8 @@ async function loadFestivalsAndMovies(): Promise<{
   });
 
   const movieItems = (movies.items ?? []).map(mapMovie);
-  const upcomingMovieItems = (movies.upcoming ?? []).map(mapMovie);
 
-  return { festivalItems, movieItems, upcomingMovieItems };
+  return { festivalItems, movieItems };
 }
 
 function movieBadgeLabel(item: Upcoming, section: "upcoming" | "now"): string {
@@ -84,12 +82,12 @@ function daysUntilLabel(dateStr: string): string | null {
 }
 
 export default async function Home() {
-  const { festivalItems, movieItems, upcomingMovieItems } = await loadFestivalsAndMovies();
+  const { festivalItems, movieItems } = await loadFestivalsAndMovies();
 
   const mlFest =
-    "\u0D35\u0D30\u0D3E\u0D28\u0D3F\u0D30\u0D3F\u0D15\u0D4D\u0D15\u0D41\u0D28\u0D4D\u0D28 \u0D06\u0D18\u0D4B\u0D37\u0D19\u0D4D\u0D19\u0D7E";
+    "വരാനിരിക്കുന്ന ആഘോഷങ്ങൾ";
   const mlMovies =
-    "\u0D2E\u0D32\u0D2F\u0D3E\u0D33\u0D02 \u0D38\u0D3F\u0D28\u0D3F\u0D2E";
+    "മലയാളം സിനിമ";
 
   return (
     <div className="min-h-full bg-[#0b0f14]">
@@ -182,134 +180,72 @@ export default async function Home() {
           )}
         </GrafanaPanel>
 
-        <GrafanaPanel
-          id="movies"
-          title="Malayalam movies"
-          subtitle={mlMovies}
-          className="kt-animate-in kt-stagger-5 scroll-mt-[120px]"
-        >
-          {movieItems.length === 0 && upcomingMovieItems.length === 0 ? (
-            <p className="text-[0.85rem] text-[var(--gf-text-muted)]">
-              No Malayalam listings from Watchmode. Add{" "}
-              <code className="font-mono text-[var(--gf-accent)]">WATCHMODE_API_KEY</code> in{" "}
-              Vercel → Env (Production) for Serverless Functions,{" "}
-              <strong className="text-[var(--gf-text-muted)]">save</strong>, then{" "}
-              <strong className="text-[var(--gf-text-muted)]">Redeploy</strong>. Inspect{" "}
-              <code className="font-mono text-[var(--gf-accent)]">/api/movies</code> for JSON.
-            </p>
-          ) : (
-            <div className="space-y-6">
-              {upcomingMovieItems.length > 0 ? (
-                <div>
-                  <h3 className="mb-3 font-mono text-[0.68rem] font-semibold tracking-wider text-[var(--gf-accent)] uppercase">
-                    Upcoming
-                  </h3>
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                    {upcomingMovieItems.map((item, i) => {
-                      const countdown = daysUntilLabel(item.date);
-                      const badge = movieBadgeLabel(item, "upcoming");
-                      return (
-                        <div
-                          key={`up-${item.title}-${item.date}-${i}`}
-                          className="kt-card-hover gf-subpanel cursor-default overflow-hidden"
-                        >
-                          <div className="relative aspect-[2/3] overflow-hidden border-b border-[var(--gf-panel-border)] bg-[var(--gf-panel-inner)]">
-                            {item.poster ? (
-                              <img
-                                src={item.poster}
-                                alt={item.title}
-                                className="h-full w-full object-cover"
-                                loading="lazy"
-                              />
-                            ) : (
-                              <div className="flex h-full w-full items-center justify-center text-4xl">
-                                {["\u{1F3AC}", "\u{1F39E}\uFE0F", "\u{1F3AD}", "\u{1F3DE}\uFE0F"][i % 4]}
-                              </div>
-                            )}
+        {movieItems.length > 0 ? (
+          <GrafanaPanel
+            id="movies"
+            title="Malayalam movies"
+            subtitle={mlMovies}
+            className="kt-animate-in kt-stagger-5 scroll-mt-[120px]"
+          >
+            <div>
+              <h3 className="mb-3 font-mono text-[0.68rem] font-semibold tracking-wider text-[var(--gf-text-muted)] uppercase">
+                Now showing &amp; streaming
+              </h3>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                {movieItems.map((item, i) => {
+                  const badge = movieBadgeLabel(item, "now");
+                  const isOtt = badge === "OTT";
+                  return (
+                    <div
+                      key={`${item.title}-${item.date}-${i}`}
+                      className="kt-card-hover gf-subpanel cursor-default overflow-hidden"
+                    >
+                      <div className="relative aspect-[2/3] overflow-hidden border-b border-[var(--gf-panel-border)] bg-[var(--gf-panel-inner)]">
+                        {item.poster ? (
+                          <img
+                            src={item.poster}
+                            alt={item.title}
+                            className="h-full w-full object-cover"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-4xl">
+                            {["\u{1F3AC}", "\u{1F39E}️", "\u{1F3AD}", "\u{1F3DE}️"][i % 4]}
                           </div>
-                          <div className="p-2">
-                            <div className="line-clamp-2 text-[0.78rem] text-[var(--gf-text)]">{item.title}</div>
-                            <div className="mt-1 font-mono text-[0.62rem] text-[var(--gf-text-muted)]">
-                              {formatMovieDateLine(item.date)}
-                              {countdown ? ` · ${countdown}` : ""}
-                            </div>
-                            {item.note ? (
-                              <div className="mt-0.5 text-[0.58rem] leading-snug text-[var(--gf-text-muted)] opacity-90">
-                                {item.note}
-                              </div>
-                            ) : null}
-                            <span className="mt-1 inline-block rounded-sm border border-[var(--gf-accent)]/40 bg-[var(--gf-accent-soft)] px-1.5 py-0.5 font-mono text-[0.55rem] font-bold text-[var(--gf-accent)]">
-                              {badge}
-                            </span>
-                          </div>
+                        )}
+                      </div>
+                      <div className="p-2">
+                        <div className="line-clamp-2 text-[0.78rem] text-[var(--gf-text)]">{item.title}</div>
+                        <div className="mt-1 font-mono text-[0.62rem] text-[var(--gf-text-muted)]">
+                          {formatMovieDateLine(item.date)}
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : null}
-              {movieItems.length > 0 ? (
-                <div>
-                  <h3 className="mb-3 font-mono text-[0.68rem] font-semibold tracking-wider text-[var(--gf-text-muted)] uppercase">
-                    Now showing &amp; streaming
-                  </h3>
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                    {movieItems.map((item, i) => {
-                      const badge = movieBadgeLabel(item, "now");
-                      const isOtt = badge === "OTT";
-                      return (
-                        <div
-                          key={`${item.title}-${item.date}-${i}`}
-                          className="kt-card-hover gf-subpanel cursor-default overflow-hidden"
+                        {item.note ? (
+                          <div className="mt-0.5 text-[0.58rem] leading-snug text-[var(--gf-text-muted)] opacity-90">
+                            {item.note}
+                          </div>
+                        ) : null}
+                        <span
+                          className={`mt-1 inline-block rounded-sm border px-1.5 py-0.5 font-mono text-[0.55rem] font-bold ${
+                            isOtt
+                              ? "border-[var(--gf-warn)]/40 bg-[rgba(249,168,37,0.12)] text-[var(--gf-warn)]"
+                              : "border-[var(--gf-live)]/40 bg-[rgba(63,185,80,0.12)] text-[var(--gf-live)]"
+                          }`}
                         >
-                          <div className="relative aspect-[2/3] overflow-hidden border-b border-[var(--gf-panel-border)] bg-[var(--gf-panel-inner)]">
-                            {item.poster ? (
-                              <img
-                                src={item.poster}
-                                alt={item.title}
-                                className="h-full w-full object-cover"
-                                loading="lazy"
-                              />
-                            ) : (
-                              <div className="flex h-full w-full items-center justify-center text-4xl">
-                                {["\u{1F3AC}", "\u{1F39E}\uFE0F", "\u{1F3AD}", "\u{1F3DE}\uFE0F"][i % 4]}
-                              </div>
-                            )}
-                          </div>
-                          <div className="p-2">
-                            <div className="line-clamp-2 text-[0.78rem] text-[var(--gf-text)]">{item.title}</div>
-                            <div className="mt-1 font-mono text-[0.62rem] text-[var(--gf-text-muted)]">
-                              {formatMovieDateLine(item.date)}
-                            </div>
-                            {item.note ? (
-                              <div className="mt-0.5 text-[0.58rem] leading-snug text-[var(--gf-text-muted)] opacity-90">
-                                {item.note}
-                              </div>
-                            ) : null}
-                            <span
-                              className={`mt-1 inline-block rounded-sm border px-1.5 py-0.5 font-mono text-[0.55rem] font-bold ${
-                                isOtt
-                                  ? "border-[var(--gf-warn)]/40 bg-[rgba(249,168,37,0.12)] text-[var(--gf-warn)]"
-                                  : "border-[var(--gf-live)]/40 bg-[rgba(63,185,80,0.12)] text-[var(--gf-live)]"
-                              }`}
-                            >
-                              {badge}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : null}
+                          {badge}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          )}
-        </GrafanaPanel>
+          </GrafanaPanel>
+        ) : null}
       </main>
 
       <footer className="mt-8 border-t border-[var(--gf-panel-border)] bg-[var(--gf-header-bar)] px-4 py-6 text-center font-mono text-[0.68rem] text-[var(--gf-text-muted)]">
         <span className="font-ml-serif mb-1 block text-[0.82rem] text-[var(--gf-accent)]">
-          {"\u0D15\u0D47\u0D30\u0D33\u0D02 \u00B7 \u0D26\u0D48\u0D35\u0D24\u0D4D\u0D24\u0D3F\u0D28\u0D4D\u0D31\u0D46 \u0D38\u0D4D\u0D35\u0D28\u0D4D\u0D24\u0D02 \u0D28\u0D3E\u0D1F\u0D4D"}
+          {"കേരളം · ദൈവത്തിന്റെ സ്വന്തം നാട്"}
         </span>
         Kerala Monitor — telemetry for God&apos;s Own Country
         <br />
