@@ -9,6 +9,12 @@ import { GrafanaDashRow } from "@/components/GrafanaDashRow";
 import { GrafanaDataRow } from "@/components/GrafanaDataRow";
 import { KeralaMapWeatherLoader } from "@/components/KeralaMapWeatherLoader";
 import { NewsSection } from "@/components/NewsSection";
+import { RainfallPanel } from "@/components/RainfallPanel";
+import { ReservoirPanel } from "@/components/ReservoirPanel";
+import { JobsPanel } from "@/components/JobsPanel";
+import { SportsPanel } from "@/components/SportsPanel";
+import { LotteryPanel } from "@/components/LotteryPanel";
+import { FlightsPanel } from "@/components/FlightsPanel";
 import { StreamEmbeds } from "@/components/StreamEmbeds";
 import { GITHUB_REPO_URL } from "@/config/site";
 import { youtubeStreamEntries } from "@/config/sources";
@@ -92,26 +98,42 @@ export default async function Home() {
   return (
     <div className="min-h-full bg-[#0b0f14]">
       <div className="gf-top-stripe" aria-hidden />
-      <SiteHeader />
-      <AlertBanner />
-      <MainNav />
 
-      <main className="mx-auto max-w-7xl space-y-5 px-3 py-5 md:px-5">
+      {/* Header, ticker and nav pin together so the section rail stays reachable on mobile. */}
+      <div className="sticky top-0 z-[200] shadow-[0_4px_24px_rgba(0,0,0,0.5)]">
+        <SiteHeader />
+        <AlertBanner />
+        <MainNav />
+      </div>
+
+      <main className="mx-auto max-w-7xl space-y-4 px-2.5 py-4 md:space-y-5 md:px-5 md:py-5">
         <KeralaMapWeatherLoader />
 
         <StreamEmbeds entries={youtubeStreamEntries} />
+
+        <NewsSection />
 
         <GrafanaDataRow />
 
         <GrafanaDashRow />
 
-        <NewsSection />
+        <RainfallPanel />
+
+        <ReservoirPanel />
+
+        <FlightsPanel />
+
+        <SportsPanel />
+
+        <LotteryPanel />
+
+        <JobsPanel />
 
         <GrafanaPanel
           id="festivals"
           title="Upcoming festivals"
           subtitle={mlFest}
-          className="kt-animate-in kt-stagger-4 scroll-mt-[120px]"
+          className="kt-animate-in kt-stagger-4 gf-anchor"
           rightSlot={<RouterRefreshButton />}
         >
           {festivalItems.length === 0 ? (
@@ -185,7 +207,7 @@ export default async function Home() {
             id="movies"
             title="Malayalam movies"
             subtitle={mlMovies}
-            className="kt-animate-in kt-stagger-5 scroll-mt-[120px]"
+            className="kt-animate-in kt-stagger-5 gf-anchor"
           >
             <div>
               <h3 className="mb-3 font-mono text-[0.68rem] font-semibold tracking-wider text-[var(--gf-text-muted)] uppercase">

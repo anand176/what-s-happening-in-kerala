@@ -70,7 +70,7 @@ export function ForexPanel() {
       id="forex"
       title="INR exchange rates"
       subtitle={mlSub}
-      className="kt-animate-in kt-stagger-1 scroll-mt-[120px]"
+      className="kt-animate-in kt-stagger-1 gf-anchor"
       rightSlot={
         updatedAt ? (
           <span className="font-mono text-[10px] text-[var(--gf-text-muted)]">

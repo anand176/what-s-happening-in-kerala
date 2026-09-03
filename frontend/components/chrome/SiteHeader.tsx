@@ -90,14 +90,16 @@ export function SiteHeader() {
 
   const timeStr = now?.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true }) ?? "--:--";
   const dateStr = now?.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" }) ?? "";
+  /** Narrow screens can't fit the long form next to the title. */
+  const dateStrShort = now?.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) ?? "";
   const mlSub = "\u0D15\u0D47\u0D30\u0D33 \u0D1F\u0D41\u0D21\u0D47 \u00B7 \u0D28\u0D3F\u0D19\u0D4D\u0D19\u0D33\u0D41\u0D1F\u0D46 \u0D15\u0D47\u0D30\u0D33\u0D02";
 
   return (
-    <header className="sticky top-0 z-[200] shadow-[0_4px_24px_rgba(0,0,0,0.5)]">
-      <div className="gf-site-header-main flex items-center justify-between px-4 py-3 md:px-6">
-        <div className="flex items-center gap-3">
+    <header>
+      <div className="gf-site-header-main flex items-center justify-between gap-2 px-3 py-2 md:px-6 md:py-3">
+        <div className="flex min-w-0 items-center gap-2 md:gap-3">
           <div
-            className="relative h-10 w-10 shrink-0 overflow-hidden rounded-sm border border-[var(--gf-panel-border)] bg-white"
+            className="relative h-8 w-8 shrink-0 overflow-hidden rounded-sm border border-[var(--gf-panel-border)] bg-white md:h-10 md:w-10"
             style={{ boxShadow: "inset 0 0 0 1px rgba(240,90,40,0.25)" }}
           >
             <img
@@ -109,27 +111,27 @@ export function SiteHeader() {
               decoding="async"
             />
           </div>
-          <div>
-            <h1 className="font-mono text-[13px] font-bold tracking-[0.12em] text-[var(--gf-text)] uppercase md:text-sm">
+          <div className="min-w-0">
+            <h1 className="truncate font-mono text-[11px] font-bold tracking-[0.08em] text-[var(--gf-text)] uppercase md:text-sm md:tracking-[0.12em]">
               What&apos;s happening in Kerala
             </h1>
-            <p className="font-ml-serif text-[0.7rem] text-[var(--gf-text-muted)] md:text-[0.72rem]">
+            <p className="font-ml-serif truncate text-[0.62rem] text-[var(--gf-text-muted)] md:text-[0.72rem]">
               {mlSub}
             </p>
           </div>
         </div>
-        <div className="text-right font-mono text-[0.65rem] leading-snug text-[var(--gf-text-muted)] md:text-[0.68rem]">
-          <span className="font-ml-serif text-[0.74rem] font-medium text-[var(--gf-accent)] md:text-[0.76rem]">
+        <div className="shrink-0 text-right font-mono text-[0.58rem] leading-snug text-[var(--gf-text-muted)] md:text-[0.68rem]">
+          <span className="font-ml-serif block text-[0.64rem] font-medium text-[var(--gf-accent)] md:text-[0.76rem]">
             {now ? mlCalendarLine(now) : "\u2026"}
           </span>
-          <br />
-          <span className="text-[var(--gf-text)]">{dateStr}</span>
-          <br />
-          <span className="tabular-nums text-[var(--gf-live)]">{timeStr}</span>
+          {/* Long weekday form only fits once there's room beside the title. */}
+          <span className="hidden text-[var(--gf-text)] md:block">{dateStr}</span>
+          <span className="block text-[var(--gf-text)] md:hidden">{dateStrShort}</span>
+          <span className="block tabular-nums text-[var(--gf-live)]">{timeStr}</span>
         </div>
       </div>
       <div
-        className="gf-site-header-strip flex items-center gap-6 overflow-x-auto px-4 py-2 md:px-6 [&::-webkit-scrollbar]:hidden"
+        className="gf-site-header-strip flex items-center gap-4 overflow-x-auto px-3 py-1.5 md:gap-6 md:px-6 md:py-2 [&::-webkit-scrollbar]:hidden"
         style={{ scrollbarWidth: "none" }}
       >
         {!strip?.length ? (

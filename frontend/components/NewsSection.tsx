@@ -56,7 +56,7 @@ export function NewsSection() {
       id="latest-news"
       title="Latest headlines"
       subtitle={mlHead}
-      className="kt-animate-in kt-stagger-3 flex max-h-[min(85vh,900px)] scroll-mt-[120px] flex-col"
+      className="kt-animate-in kt-stagger-3 flex max-h-[min(85vh,900px)] gf-anchor flex-col"
       contentClassName="flex min-h-0 flex-1 flex-col !pb-3"
       rightSlot={refreshBtn}
     >

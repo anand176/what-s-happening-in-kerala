@@ -11,6 +11,7 @@ import { keralaMainCities, openMeteoMultiCityUrl } from "@/config/kerala-cities"
 import { weatherCodeLabel } from "@/lib/weather";
 import type { AqiPayload } from "@/app/api/aqi/route";
 import type { WikiPayload } from "@/app/api/wiki-district/route";
+import { tint } from "@/lib/color";
 
 // ─── types ────────────────────────────────────────────────────────────────────
 
@@ -58,7 +59,7 @@ function FitBounds({ data }: { data: FeatureCollection }) {
   useEffect(() => {
     const gj = L.geoJSON(data as GeoJsonObject);
     const b = gj.getBounds();
-    if (b.isValid()) map.fitBounds(b, { padding: [28, 28], maxZoom: 10 });
+    if (b.isValid()) map.fitBounds(b, { padding: [70, 70], maxZoom: 8 });
   }, [map, data]);
   return null;
 }
@@ -197,7 +198,7 @@ export function KeralaMapWeather() {
       id="districts"
       title="District situation"
       subtitle={mlMapSub}
-      className="kt-animate-in scroll-mt-[120px]"
+      className="kt-animate-in gf-anchor"
       rightSlot={
         <div className="flex shrink-0 items-center gap-2">
           <PanelRefreshButton
@@ -223,7 +224,7 @@ export function KeralaMapWeather() {
             </p>
           )}
           <div className="gf-map-shell">
-            <div className="relative h-[min(58vh,600px)] min-h-[400px] w-full">
+            <div className="relative h-[min(52vh,600px)] min-h-[320px] w-full md:h-[min(58vh,600px)] md:min-h-[400px]">
               {geo ? (
                 <MapContainer
                   center={[10.15, 76.35]}
@@ -343,7 +344,7 @@ export function KeralaMapWeather() {
         {/* ── Right: Weather + AQI + district chips ── */}
         <div
           id="weather-section"
-          className="flex scroll-mt-[120px] flex-col gap-4 lg:col-span-2"
+          className="flex gf-anchor flex-col gap-4 lg:col-span-2"
         >
           {weatherErr && (
             <p className="rounded-sm border border-[var(--gf-danger)]/40 bg-[rgba(226,77,77,0.12)] px-3 py-2 text-[0.82rem] text-[var(--gf-danger)]">
@@ -408,7 +409,7 @@ export function KeralaMapWeather() {
                           <span className="text-[0.82rem] text-[var(--gf-text)]">European AQI</span>
                           <span
                             className="rounded-sm px-2 py-0.5 font-mono text-[0.62rem] font-bold"
-                            style={{ color: aqiInfo.color, background: `${aqiInfo.color}22`, border: `1px solid ${aqiInfo.color}55` }}
+                            style={{ color: aqiInfo.color, background: tint(aqiInfo.color, 13), border: `1px solid ${tint(aqiInfo.color, 33)}` }}
                           >
                             {aqiInfo.label}
                           </span>

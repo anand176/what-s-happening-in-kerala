@@ -3,20 +3,32 @@
 
 /* Grafana-style dark dashboard + legacy Kerala tokens */
 :root {
-  --gf-page: #0b0f14;
-  --gf-panel-bg: #11151c;
-  --gf-panel-inner: #0e1218;
-  --gf-panel-border: #2c323d;
-  --gf-header-bar: #151922;
-  --gf-nav-bg: #1a1f28;
-  --gf-text: #d8dee9;
-  --gf-text-muted: #7b8494;
-  --gf-accent: #f05a28;
-  --gf-accent-soft: rgba(240, 90, 40, 0.12);
-  --gf-live: #3fb950;
-  --gf-warn: #f5a623;
-  --gf-danger: #e24d4d;
-  --gf-ticker-bg: #321a1a;
+  /* Surfaces — each step lifts slightly so panels read as layered, not flat-on-black. */
+  --gf-page: #0a0e13;
+  --gf-panel-bg: #141922;
+  --gf-panel-inner: #10151d;
+  --gf-panel-border: #262e3a;
+  --gf-panel-border-soft: #1e2530;
+  --gf-header-bar: #161b25;
+  --gf-nav-bg: #131821;
+
+  /* Text — muted lifted to ~5.7:1 so the small mono labels stay legible. */
+  --gf-text: #e3e8f0;
+  --gf-text-muted: #8d96a7;
+  --gf-text-faint: #6b7382;
+
+  /* Brand accent — same Kerala orange, slightly softened off fluorescent. */
+  --gf-accent: #f26f3c;
+  --gf-accent-strong: #f05a28;
+  --gf-accent-soft: rgba(242, 111, 60, 0.11);
+  --gf-accent-line: rgba(242, 111, 60, 0.34);
+
+  /* Status — desaturated a touch so several at once don't fight. */
+  --gf-live: #4ec26a;
+  --gf-warn: #e8a33d;
+  --gf-danger: #dd5c5c;
+  --gf-info: #4a9fd8;
+  --gf-ticker-bg: #2b1a18;
 
   --kt-green: #1b5e20;
   --kt-green-mid: #2e7d32;
@@ -52,12 +64,12 @@
  */
 html {
   color-scheme: dark;
-  background-color: #0b0f14;
+  background-color: #0a0e13;
 }
 
 body {
-  background-color: #0b0f14;
-  color: #d8dee9;
+  background-color: #0a0e13;
+  color: #e3e8f0;
   overflow-x: hidden;
 }
 
@@ -100,18 +112,24 @@ summary:focus-visible {
 .gf-panel {
   background: var(--gf-panel-bg);
   border: 1px solid var(--gf-panel-border);
-  border-radius: 2px;
+  border-radius: 3px;
   box-shadow:
-    0 2px 10px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 6px 20px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035);
+  transition: border-color 0.2s ease;
+}
+
+.gf-panel:hover {
+  border-color: #2f3846;
 }
 
 .gf-panel-header {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  padding: 10px 14px;
-  background: rgba(0, 0, 0, 0.22);
+  padding: 11px 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.028), rgba(0, 0, 0, 0.16));
   border-bottom: 1px solid var(--gf-panel-border);
 }
 
@@ -119,15 +137,16 @@ summary:focus-visible {
   width: 3px;
   min-height: 28px;
   margin-top: 2px;
-  border-radius: 1px;
-  background: var(--gf-accent);
+  border-radius: 2px;
+  background: linear-gradient(180deg, var(--gf-accent), var(--gf-accent-strong));
+  box-shadow: 0 0 8px var(--gf-accent-line);
   flex-shrink: 0;
 }
 
 .gf-panel-heading {
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.085em;
   text-transform: uppercase;
   color: var(--gf-text);
   line-height: 1.35;
@@ -151,15 +170,20 @@ summary:focus-visible {
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.12em;
-  color: #0b0f14;
+  color: #0a0e13;
   background: var(--gf-live);
 }
 
 .gf-subpanel {
   background: var(--gf-panel-inner);
-  border: 1px solid var(--gf-panel-border);
-  border-radius: 2px;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--gf-panel-border-soft);
+  border-radius: 3px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.022);
+  transition: border-color 0.18s ease, background-color 0.18s ease;
+}
+
+.gf-subpanel:hover {
+  border-color: var(--gf-panel-border);
 }
 
 .gf-subpanel-toolbar {
@@ -194,8 +218,49 @@ summary:focus-visible {
 }
 
 .gf-nav-bar {
-  background: var(--gf-nav-bg);
+  background: linear-gradient(180deg, var(--gf-header-bar), var(--gf-nav-bg));
   border-bottom: 1px solid var(--gf-panel-border);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+  scroll-behavior: smooth;
+}
+
+/*
+ * The section rail scrolls horizontally and overflows on phones, so fade both
+ * edges to signal there is more beyond the viewport.
+ */
+.gf-nav-fade {
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0,
+    #000 18px,
+    #000 calc(100% - 18px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0,
+    #000 18px,
+    #000 calc(100% - 18px),
+    transparent 100%
+  );
+}
+
+@media (min-width: 768px) {
+  .gf-nav-fade {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+}
+
+/* Anchor offset must clear the sticky header + ticker + nav stack. */
+.gf-anchor {
+  scroll-margin-top: 150px;
+}
+
+@media (min-width: 768px) {
+  .gf-anchor {
+    scroll-margin-top: 172px;
+  }
 }
 
 .gf-top-stripe {
@@ -203,11 +268,12 @@ summary:focus-visible {
   background: linear-gradient(
     90deg,
     transparent,
-    var(--gf-accent),
+    var(--gf-accent-strong),
     var(--gf-warn),
-    var(--gf-accent),
+    var(--gf-accent-strong),
     transparent
   );
+  opacity: 0.85;
 }
 
 /* Kasavu stripes */

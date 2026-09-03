@@ -14,7 +14,7 @@ export function GrafanaMiniPanel({
   children: ReactNode;
 }) {
   return (
-    <div id={id} className="gf-panel flex min-w-0 flex-1 flex-col scroll-mt-[120px]">
+    <div id={id} className="gf-panel flex min-w-0 flex-1 flex-col gf-anchor">
       <div className="flex items-center gap-2 border-b border-[var(--gf-panel-border)] bg-black/20 px-3 py-2">
         <span className="min-w-0 flex-1 truncate font-mono text-[0.68rem] font-semibold tracking-widest text-[var(--gf-text)] uppercase">
           {title}

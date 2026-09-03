@@ -95,7 +95,7 @@ export function MarketsPanel() {
       id="markets"
       title="Indian markets"
       subtitle={mlSub}
-      className="kt-animate-in kt-stagger-2 scroll-mt-[120px]"
+      className="kt-animate-in kt-stagger-2 gf-anchor"
       rightSlot={
         <div className="flex items-center gap-2">
           {data?.marketOpen && (

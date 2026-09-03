@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { GrafanaPanel } from "@/components/grafana/GrafanaPanel";
 import type { QuakePayload, QuakeFeature } from "@/app/api/earthquakes/route";
+import { tint } from "@/lib/color";
 
 const REFRESH_MS = 15 * 60 * 1000; // 15 min
 
@@ -46,7 +47,7 @@ function QuakeRow({ q }: { q: QuakeFeature }) {
       {/* Magnitude badge */}
       <div
         className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-sm border font-mono font-bold"
-        style={{ borderColor: `${color}55`, background: `${color}18`, color }}
+        style={{ borderColor: tint(color, 33), background: tint(color, 9), color }}
       >
         <span className="text-[1.1rem] leading-none">{q.magnitude.toFixed(1)}</span>
         <span className="text-[0.52rem] font-semibold uppercase opacity-80">M</span>
@@ -55,7 +56,7 @@ function QuakeRow({ q }: { q: QuakeFeature }) {
         <div className="flex flex-wrap items-center gap-2">
           <span
             className="rounded-sm px-1.5 py-0.5 font-mono text-[0.58rem] font-bold uppercase"
-            style={{ color, background: `${color}22` }}
+            style={{ color, background: tint(color, 13) }}
           >
             {magLabel(q.magnitude)}
           </span>
@@ -103,7 +104,7 @@ export function EarthquakePanel() {
       id="earthquakes"
       title="Seismic activity"
       subtitle={mlSub}
-      className="kt-animate-in kt-stagger-3 scroll-mt-[120px]"
+      className="kt-animate-in kt-stagger-3 gf-anchor"
       rightSlot={
         <span className="font-mono text-[10px] font-semibold tracking-wider text-[var(--gf-text-muted)]">
           SEISMIC · 30d

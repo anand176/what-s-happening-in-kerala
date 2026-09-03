@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { GrafanaPanel } from "@/components/grafana/GrafanaPanel";
 import type { AqiPayload, AqiCityData } from "@/app/api/aqi/route";
+import { tint } from "@/lib/color";
 
 const REFRESH_MS = 10 * 60 * 1000; // 10 min
 
@@ -47,7 +48,7 @@ function CityAqiRow({ city }: { city: AqiCityData }) {
         </div>
         <span
           className="rounded-sm px-2 py-0.5 font-mono text-[0.62rem] font-bold"
-          style={{ color: meta.color, background: `${meta.color}22`, border: `1px solid ${meta.color}55` }}
+          style={{ color: meta.color, background: tint(meta.color, 13), border: `1px solid ${tint(meta.color, 33)}` }}
         >
           {meta.label}
         </span>
@@ -104,7 +105,7 @@ export function AqiPanel() {
       id="aqi"
       title="Air quality index"
       subtitle={mlSub}
-      className="kt-animate-in kt-stagger-2 scroll-mt-[120px]"
+      className="kt-animate-in kt-stagger-2 gf-anchor"
       rightSlot={
         <span className="font-mono text-[10px] font-semibold tracking-wider text-[var(--gf-text-muted)]">
           AQI / PM
