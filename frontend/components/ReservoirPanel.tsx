@@ -71,13 +71,6 @@ export function ReservoirPanel() {
 
       {!loading && data && (
         <>
-          <div className="mb-3 rounded-sm border border-[var(--gf-panel-border)] bg-[var(--gf-panel-inner)] px-3 py-2 text-[0.78rem] text-[var(--gf-text-muted)]">
-            Levels are maintained manually in{" "}
-            <code className="font-mono text-[var(--gf-accent)]">config/kerala-dams.ts</code> (as of{" "}
-            <strong className="text-[var(--gf-text)]">{data.asOf}</strong>) — KSEB publishes dam
-            bulletins as PDFs with no public API. Indicative only; check the official bulletin for
-            operational decisions.
-          </div>
 
           {alerts.length > 0 && (
             <div className="mb-3 rounded-sm border border-[var(--gf-warn)]/40 bg-[rgba(245,166,35,0.1)] px-3 py-2 text-[0.8rem] text-[var(--gf-warn)]">
@@ -139,6 +132,11 @@ export function ReservoirPanel() {
               );
             })}
           </div>
+
+          <p className="mt-3 font-mono text-[0.62rem] text-[var(--gf-text-muted)]">
+            Indicative levels · as of {data.asOf} · refer to the official KSEB bulletin for
+            operational decisions
+          </p>
         </>
       )}
     </GrafanaPanel>

@@ -99,7 +99,7 @@ async function loadTeam(cfg: (typeof keralaSportsTeams)[number]): Promise<Sports
       badge: null,
       league: null,
       fixtures: [],
-      note: "Team not found on TheSportsDB.",
+      note: "Fixtures unavailable for this team.",
     };
   }
 
@@ -122,7 +122,7 @@ async function loadTeam(cfg: (typeof keralaSportsTeams)[number]): Promise<Sports
     fixtures,
     note:
       fixtures.length === 0
-        ? "No fixtures available on the free API tier right now."
+        ? "No fixtures listed right now."
         : null,
   };
 }

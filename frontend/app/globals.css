@@ -221,7 +221,6 @@ summary:focus-visible {
   background: linear-gradient(180deg, var(--gf-header-bar), var(--gf-nav-bg));
   border-bottom: 1px solid var(--gf-panel-border);
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
-  scroll-behavior: smooth;
 }
 
 /*
@@ -229,6 +228,7 @@ summary:focus-visible {
  * edges to signal there is more beyond the viewport.
  */
 .gf-nav-fade {
+  scroll-behavior: smooth;
   -webkit-mask-image: linear-gradient(
     90deg,
     transparent 0,

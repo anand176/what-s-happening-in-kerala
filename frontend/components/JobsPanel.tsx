@@ -71,9 +71,7 @@ export function JobsPanel() {
 
           {data.items.length === 0 ? (
             <p className="py-4 text-center text-[0.85rem] text-[var(--gf-text-muted)]">
-              No notifications loaded. Feeds are configurable in{" "}
-              <code className="font-mono text-[var(--gf-accent)]">config/sources.ts</code> →{" "}
-              <code className="font-mono text-[var(--gf-accent)]">jobsRssFeeds</code>.
+              No notifications available right now. Try refreshing in a few minutes.
             </p>
           ) : (
             <ul className="max-h-[min(70vh,520px)] space-y-2 overflow-y-auto pr-1">
@@ -104,7 +102,7 @@ export function JobsPanel() {
           )}
 
           <p className="mt-3 font-mono text-[0.62rem] text-[var(--gf-text-muted)]">
-            {data.sources} · Kerala PSC has no public RSS — add feeds in config/sources.ts
+            {data.sources}
           </p>
         </>
       )}

@@ -92,7 +92,7 @@ export async function GET() {
     const res = await fetch(url, { headers, cache: "no-store" });
 
     if (res.status === 429) {
-      throw new Error("OpenSky rate limit reached — set OPENSKY_USER / OPENSKY_PASS for a higher quota.");
+      throw new Error("Live flight data is rate limited right now — try again shortly.");
     }
     if (!res.ok) throw new Error(`OpenSky ${res.status}`);
 

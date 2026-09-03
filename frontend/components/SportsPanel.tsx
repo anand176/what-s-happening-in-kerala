@@ -141,7 +141,7 @@ export function SportsPanel() {
           </div>
 
           <p className="mt-3 font-mono text-[0.62rem] text-[var(--gf-text-muted)]">
-            TheSportsDB · set THESPORTSDB_KEY for full fixture access · teams configurable in config/sources.ts
+            Fixtures via TheSportsDB
           </p>
         </>
       )}

@@ -145,7 +145,7 @@ export function FlightsPanel() {
           )}
 
           <p className="mt-3 font-mono text-[0.62rem] text-[var(--gf-text-muted)]">
-            OpenSky Network · refreshes every 60 s · set OPENSKY_USER / OPENSKY_PASS for a higher quota
+            Live ADS-B via OpenSky Network · updates every 60 s
           </p>
         </>
       )}
