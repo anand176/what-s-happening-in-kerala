@@ -8,7 +8,7 @@ export const youtubeChannels = [
   { name: "Mathrubhumi News",  url: "https://www.youtube.com/watch?v=RbxEftGN584" },
   { name: "24 News Malayalam", url: "https://www.youtube.com/watch?v=1wECsnGZcfc" },
   { name: "Reporter TV",       url: "https://www.youtube.com/watch?v=nObUcHKZEGY" },
-  { name: "Big TV",            url: "https://www.youtube.com/watch?v=HRvY9DoJ_qI" },
+  { name: "Big TV",            url: "https://www.youtube.com/live/Az5I714Nk4M" },
 ] as const;
 
 export const youtubeStreamEntries = youtubeChannels.map((ch) => {

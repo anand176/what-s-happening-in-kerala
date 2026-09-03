@@ -12,6 +12,10 @@ export function youtubeVideoIdFromUrl(input: string): string | null {
       if (u.pathname.startsWith("/embed/")) {
         return u.pathname.split("/")[2] || null;
       }
+      /** YouTube hands out /live/<id> links when you copy from a live stream. */
+      if (u.pathname.startsWith("/live/")) {
+        return u.pathname.split("/")[2] || null;
+      }
     }
   } catch {
     return null;

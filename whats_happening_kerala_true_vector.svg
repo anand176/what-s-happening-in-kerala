@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7AC943"/>
+      <stop offset="100%" stop-color="#3FA34D"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="800" height="800" fill="white"/>
+
+  <!-- Magnifying glass -->
+  <circle cx="400" cy="390" r="250" fill="none" stroke="#0B5D3B" stroke-width="22"/>
+  <line x1="565" y1="565" x2="690" y2="690" stroke="#0B5D3B" stroke-width="30" stroke-linecap="round"/>
+
+  <!-- Stylized Kerala silhouette -->
+  <path d="
+  M330 70
+  C300 110,300 145,315 190
+  C330 230,345 280,350 330
+  C355 380,360 435,370 490
+  C380 555,395 620,420 690
+  C445 740,485 735,500 680
+  C510 630,520 580,525 525
+  C530 470,540 420,550 360
+  C560 300,560 240,545 185
+  C530 135,500 100,460 75
+  C425 55,370 50,330 70 Z"
+  fill="url(#g)" stroke="#0B5D3B" stroke-width="4"/>
+
+  <!-- Simple icons -->
+  <circle cx="470" cy="180" r="35" fill="#F5C242"/>
+  <path d="M365 210 L455 150 L520 210 Z" fill="#0B5D3B"/>
+  <rect x="395" y="300" width="90" height="25" rx="10" fill="#0B5D3B"/>
+  <ellipse cx="440" cy="312" rx="65" ry="18" fill="none" stroke="#0B5D3B" stroke-width="3"/>
+  <circle cx="425" cy="430" r="22" fill="#0B5D3B"/>
+  <rect x="455" y="415" width="45" height="28" rx="8" fill="#0B5D3B"/>
+  <path d="M400 560 Q440 500 480 560" fill="none" stroke="white" stroke-width="8"/>
+  <path d="M410 585 Q445 525 490 585" fill="none" stroke="white" stroke-width="8"/>
+</svg>
