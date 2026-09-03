@@ -177,6 +177,9 @@ summary:focus-visible {
   border-radius: 2px;
   overflow: hidden;
   background: var(--gf-panel-inner);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.02);
 }
 
 .gf-site-header-main {
@@ -398,6 +401,17 @@ summary:focus-visible {
   border-color: var(--gf-panel-border) !important;
   background: var(--gf-panel-bg) !important;
   color: var(--gf-text) !important;
+  transition: background 0.15s, color 0.15s;
+}
+
+.leaflet-control-zoom a:hover {
+  background: var(--gf-accent-soft) !important;
+  color: var(--gf-accent) !important;
+}
+
+.leaflet-interactive {
+  cursor: pointer;
+  transition: fill-opacity 0.15s ease, stroke-width 0.15s ease;
 }
 
 /* Hide Leaflet attribution branding */

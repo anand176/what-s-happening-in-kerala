@@ -145,7 +145,14 @@ async function fetchMoviesFromWatchmode(): Promise<MoviesPayload> {
     };
   } catch (e) {
     console.error("Watchmode fetch failed:", e);
-    throw e;
+    // Must return (not throw) so unstable_cache still caches this failure —
+    // otherwise every request retries Watchmode from scratch, which turns a
+    // single 429 into a permanent retry storm until the cache window resets.
+    return {
+      items: [],
+      source: "none",
+      error: `Watchmode fetch failed: ${String(e)}`,
+    };
   }
 }
 

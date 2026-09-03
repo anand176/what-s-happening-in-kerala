@@ -238,12 +238,14 @@ export function KeralaMapWeather() {
                   maxZoom={15}
                 >
                   <TileLayer
-                    attribution='&copy; OpenStreetMap &copy; CARTO'
-                    url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                    attribution='&copy; <a href="https://www.esri.com">Esri</a>'
+                    url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+                    maxNativeZoom={12}
                   />
                   <FitBounds data={geo} />
                   <InvalidateSize />
                   <GeoJSON
+                    key={selectedDistrict}
                     data={geo}
                     style={districtStyle as StyleFunction}
                     onEachFeature={(feature, layer) => {
@@ -251,6 +253,13 @@ export function KeralaMapWeather() {
                       if (name) {
                         layer.bindTooltip(name, { sticky: true, direction: "center", opacity: 0.95 });
                       }
+                      const path = layer as L.Path;
+                      layer.on("mouseover", () => {
+                        if (name !== selectedDistrict) path.setStyle({ fillOpacity: 0.4, weight: 2 });
+                      });
+                      layer.on("mouseout", () => {
+                        if (name !== selectedDistrict) path.setStyle({ fillOpacity: 0.28, weight: 1 });
+                      });
                       layer.on("click", () => { if (name) setSelectedDistrict(name); });
                     }}
                   />
@@ -262,9 +271,27 @@ export function KeralaMapWeather() {
               ) : null}
             </div>
           </div>
-          <p className="font-mono text-[0.65rem] text-[var(--gf-text-muted)]">
-            scroll to zoom · click district for details
-          </p>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="font-mono text-[0.65rem] text-[var(--gf-text-muted)]">
+              scroll to zoom · click district for details
+            </p>
+            <div className="flex items-center gap-3 font-mono text-[0.62rem] text-[var(--gf-text-muted)]">
+              <span className="flex items-center gap-1">
+                <span
+                  className="inline-block h-2.5 w-2.5 rounded-[1px] border"
+                  style={{ background: "#f05a28", borderColor: "#ff8a5c" }}
+                />
+                Selected
+              </span>
+              <span className="flex items-center gap-1">
+                <span
+                  className="inline-block h-2.5 w-2.5 rounded-[1px] border"
+                  style={{ background: "#2d4a52", borderColor: "#4a6670" }}
+                />
+                District
+              </span>
+            </div>
+          </div>
 
           {/* ── Wikipedia brief — fills the space below the map ── */}
           <div className="gf-subpanel flex-1 p-4">
