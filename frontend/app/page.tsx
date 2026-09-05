@@ -8,6 +8,7 @@ import { RouterRefreshButton } from "@/components/grafana/RouterRefreshButton";
 import { GrafanaDashRow } from "@/components/GrafanaDashRow";
 import { GrafanaDataRow } from "@/components/GrafanaDataRow";
 import { KeralaMapWeatherLoader } from "@/components/KeralaMapWeatherLoader";
+import { InstallAppButton } from "@/components/chrome/InstallAppButton";
 import { NewsSection } from "@/components/NewsSection";
 import { RainfallPanel } from "@/components/RainfallPanel";
 import { ReservoirPanel } from "@/components/ReservoirPanel";
@@ -272,7 +273,7 @@ export default async function Home() {
         Kerala Monitor — telemetry for God&apos;s Own Country
         <br />
         <span className="opacity-90">Kerala Monitor · God&apos;s Own Country</span>
-        <div className="mt-5 flex justify-center">
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
           <a
             href={GITHUB_REPO_URL}
             target="_blank"
@@ -289,6 +290,7 @@ export default async function Home() {
             </svg>
             <span>Star on GitHub</span>
           </a>
+          <InstallAppButton />
         </div>
       </footer>
     </div>

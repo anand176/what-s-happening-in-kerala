@@ -78,14 +78,14 @@ export function InstallAppButton() {
         type="button"
         onClick={install}
         aria-label="Install Kerala Monitor as an app"
-        className="flex min-h-9 items-center gap-1.5 rounded-sm border border-[var(--gf-accent)]/45 bg-[var(--gf-accent-soft)] px-2 py-1.5 font-mono text-[0.6rem] font-bold tracking-wider text-[var(--gf-accent)] uppercase transition-colors hover:bg-[var(--gf-accent)]/20 md:px-2.5 md:text-[0.64rem]"
+        className="group inline-flex items-center gap-2 rounded-md border border-[var(--gf-accent)]/45 bg-[var(--gf-accent-soft)] px-4 py-2.5 font-mono text-[0.68rem] font-semibold tracking-wide text-[var(--gf-accent)] uppercase shadow-[inset_0_0_0_1px_rgba(240,90,40,0.12)] transition-[color,background-color,border-color,box-shadow] hover:border-[var(--gf-accent)] hover:bg-[var(--gf-accent)]/20"
       >
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <svg className="size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
           <path d="M12 3v12" />
           <path d="m7 11 5 5 5-5" />
           <path d="M4 20h16" />
         </svg>
-        <span className="hidden sm:inline">Install</span>
+        <span>Install app</span>
       </button>
 
       {showIosHint && (
