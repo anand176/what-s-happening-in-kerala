@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { weatherCodeLabel } from "@/lib/weather";
+import { InstallAppButton } from "@/components/chrome/InstallAppButton";
 
 const STRIP_CITIES = [
   { name: "Kottayam",          lat: 9.5916,  lon: 76.5222 },
@@ -120,6 +121,7 @@ export function SiteHeader() {
             </p>
           </div>
         </div>
+        <InstallAppButton />
         <div className="shrink-0 text-right font-mono text-[0.58rem] leading-snug text-[var(--gf-text-muted)] md:text-[0.68rem]">
           <span className="font-ml-serif block text-[0.64rem] font-medium text-[var(--gf-accent)] md:text-[0.76rem]">
             {now ? mlCalendarLine(now) : "\u2026"}
